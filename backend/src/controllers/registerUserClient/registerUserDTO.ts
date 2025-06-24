@@ -7,4 +7,5 @@ export class RegisterUserClietDTO {
     plataforma: string;
     email: string;
     senha: string;
+    idPerfil: string;
 }

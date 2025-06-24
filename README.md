@@ -1,2 +1,2 @@
 # cristatusBackApp
-aplicação backend do sistema de altimação 
+aplicação backend do sistema de autimação 

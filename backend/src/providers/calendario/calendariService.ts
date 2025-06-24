@@ -375,35 +375,43 @@ export class CalendarioEditorial {
         const [{ token }] = await connection('automacao').select('token');
 
         // 4) Busca dados do cliente (se precisar)
-        const [cliente] = await connection('cliente')
-            .where('token', data.tokenUser)
-            .select('*');
+        const [cliente] = await connection('cliente').where('token', data.tokenUser).select('*');
 
         let respostaMetaPublicacao: any = null;
         // para publicações estaticas e vídeos acessar esse requisição.
+        // req para publicação do tipo  estático.
         try {
-            // criar container de puyblicação:
-            let url: string = `https://graph.facebook.com/v14.0/17841401337346096/media?image_url=https://images.pexels.com/photos/31068872/pexels-photo-31068872/free-photo-of-mulher-com-flores-em-scooter-em-ambiente-urbano.jpeg&caption=${encodeURIComponent(publicacao.legenda)}&access_token=EAAsTrXgP1KMBOzbyoXsk4YWXK6cgWkfjQfF9ZCdz8RJocdBERWQB3cLwLH74sB0PhfvxD1S4J2BuP5uvERRF6GRz3bHnK6WMgrJZC4dhGSb8yjjVBzz1RRJI36kELaphzZB9GZA2ILDkibAGgeZA2IEXkB1zze3PYZCoiqiMmQ822q80KpC9BJOabQFPM4`
+            // criar container de publicação:
+            let url: string = `https://graph.facebook.com/v14.0/${cliente.idPerfil}/media?image_url=https://images.pexels.com/photos/31068872/pexels-photo-31068872/free-photo-of-mulher-com-flores-em-scooter-em-ambiente-urbano.jpeg&caption=${encodeURIComponent(publicacao.legenda)}&access_token=${token}`
             const resp = await fetch(url, { method: 'POST' });
             // **aqui** extraímos o JSON
             respostaMetaPublicacao = await resp.json();
             // nova req para efetuar o agendamento da publicação/URIComponente()
+            if(respostaMetaPublicacao.id > 0){
+                // pegar a resposta e enviar pra a nova req para efetuar a publicação.
+                let urlContainer: string =`https://graph.facebook.com/v14.0/${cliente.idPerfil}/media_publish?creation_id=${respostaMetaPublicacao.id}&access_token=${token}`; 
+                const respContainer = await fetch(urlContainer, { method: 'POST' });
+                respostaMetaPublicacao = respContainer;
+            } else {
+                // erro ao gerar container
+                respostaMetaPublicacao = 'Não  foi possivel seguir com o processo de publicação.'
+            }
         } catch (error) {
             console.error('Erro na publicação META:', error);
             // pode atribuir null ou o próprio erro, conforme sua necessidade
             respostaMetaPublicacao = { error: (error as Error).message };
         }
 
-        // 5) Retorna tudo
+        // 5) Retorna tudo*/
         return {
             response,
             publicacao,
             cliente,
             respostaMetaPublicacao,
-            token, 
-            url, 
-            test: encodeURIComponent(publicacao.legenda),
-            time: time
+            token,
+            //url, 
+            //test: encodeURIComponent(publicacao.legenda),
+            //time: time
         };
     }
 

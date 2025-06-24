@@ -14,14 +14,15 @@ export class RegisterUserServide {
             return {res: "Usuário Já cadastrado"};
         }
         else {
-            const {user, pass, initPlano, cpf} = data;  // desconstruindo o data para crar um novo ogjeto 
-            var token =  initPlano+cpf // token de acesso 
+            const {user, pass, initPlano, idPerfil} = data;  // desconstruindo o data para crar um novo ogjeto 
+            var token =  initPlano+user // token de acesso 
             //objeto comas infomações a serem escritas no database.
             var Data = {
                 user,
                 pass,
                 initPlano, 
-                token
+                token,
+                idPerfil
             }
             var response = await connection('cliente').insert(Data);
             // validar se o dado foi inserido no database 
