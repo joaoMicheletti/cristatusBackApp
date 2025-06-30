@@ -2,7 +2,10 @@ import {Injectable } from "@nestjs/common";
 import { console, url } from "inspector";
 import { CalendarioDTO } from "src/controllers/caledarioController/calendarioDTo";
 import connection from "src/database/connection";
+// importação do zod para criar o objeto com type script para enviar a notificação.
 
+//importando a lib para fazer o push da notificação 
+import * as WebPush from 'web-push';
 @Injectable()
 
 export class CalendarioEditorial {
@@ -61,10 +64,32 @@ export class CalendarioEditorial {
         .update('formato', data.formato)
         .update('legenda', data.legenda)
         .update('descricaoArte', data.descricaoArte);
-        //.select("*");
+        let Cliente = await connection('cliente').where('token', data.tokenUser).select('*');
+        console.log('cliente', Cliente);
         console.log('resposta',res);
+        // inviar notificação /avisando os editores que o material esta diponivel e aguarda a criação dos conteudos.
+        // como nao temos o sistema de colaboradores e sus respectivas responsabilidades vamos encamiha a notificação para todos.
+        let listanotification = await connection('notifications').select('*')
+        console.log('Lista', listanotification);
+        console.log('')
+        for(let i = 0; i < listanotification.length; i++ ){
+            const subscription = {
+                endpoint: listanotification[i].endPoint,
+                keys: {
+                    p256dh: listanotification[i].p256dh,
+                    auth: listanotification[i].auth
+                }
+
+            };
+            WebPush.sendNotification(subscription, `O Conteudo do dia ${data.dia}/${data.mes}/${data.ano} do Clinete (${Cliente[0].user})- está dispónivel na área de ajustes, aguardando as Midias que compoem o Post.`)
+            console.log(' corpo da notificação',subscription)
+        }
         return({})
     };
+
+
+
+
     // buscar para area de updateMidias -
     async buscarUpdateMidia(data: CalendarioDTO): Promise<object>{
         console.log(data);
@@ -136,6 +161,7 @@ export class CalendarioEditorial {
         };   
         return res
     };
+
     //Buscar para a area de aprovação. cornogrma / publicação especifica.
     async buscarAprovacao(data: CalendarioDTO): Promise<object>{
         console.log(data);

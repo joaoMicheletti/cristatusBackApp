@@ -16,9 +16,12 @@ import { LoginCristerController } from './controllers/loginCrister/loginCrister'
 
 //modulo para upload de arquivos:
 import { UploadModule } from './controllers/caledarioController/uploadModules';
+//rota de notificatção.
+import { Notifications } from './controllers/notifications/notification';
+
 @Module({
   imports: [UploadModule],
-  controllers: [LoginUserController, RegisterUserController, Calendario, LoginCristerController],
-  providers: [LogunUserServices, RegisterUserServide, CalendarioEditorial, LoginCristerService],
+  controllers: [LoginUserController, RegisterUserController, Calendario, LoginCristerController, Notifications],
+  providers: [LogunUserServices, RegisterUserServide, CalendarioEditorial, LoginCristerService, ],
 })
 export class AppModule {}

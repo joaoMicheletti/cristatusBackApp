@@ -23,4 +23,5 @@ export class CalendarioDTO {
     id: string;
     descricaoArte: string;
     token: string;
+    user: string;
 }
