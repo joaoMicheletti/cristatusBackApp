@@ -21,7 +21,7 @@ export class Notifications {
     // registro de notificações de cada usuário
     @Post('notificationsREgister')
     async RegisterNotification(@Body() data: any): Promise<object>{
-        const { token, tokenCrister, subscription } = data;
+        const { token, tokenCrister, subscription, typeUser } = data;
         const { endpoint, expirationTime, keys } = subscription;
         const { p256dh, auth } = keys;
         let  response: any = 0;
@@ -49,6 +49,7 @@ export class Notifications {
             if(tokenCrister === null){ // se for nulo inserir o (token)
                 const Data = {
                     idUser: token, 
+                    typeUser,
                     endPoint: endpoint,
                     auth,
                     p256dh
@@ -61,6 +62,7 @@ export class Notifications {
             } else if(token === null){
                 const Data = {
                     idUser: tokenCrister, 
+                    typeUser,
                     endPoint: endpoint,
                     auth,
                     p256dh

@@ -69,7 +69,7 @@ export class CalendarioEditorial {
         console.log('resposta',res);
         // inviar notificação /avisando os editores que o material esta diponivel e aguarda a criação dos conteudos.
         // como nao temos o sistema de colaboradores e sus respectivas responsabilidades vamos encamiha a notificação para todos.
-        let listanotification = await connection('notifications').select('*')
+        let listanotification = await connection('notifications').where('typeUser', 'Crister').select('*')
         console.log('Lista', listanotification);
         console.log('')
         for(let i = 0; i < listanotification.length; i++ ){
@@ -247,6 +247,26 @@ export class CalendarioEditorial {
             res += 0;
         } else{
             res = await connection('calendario').where('id', test[0].id).update("art", 'ok');
+            //pegar dados do Cliente para colocar no body da notificação:
+            let Cliente = await connection('cliente').where('token', data.tokenUser).select('*');
+            console.log('cliente', Cliente);
+            console.log('resposta',res); 
+            
+            let listanotification = await connection('notifications').where('typeUser', 'Crister').select('*')
+            console.log('Lista', listanotification);
+            console.log('')
+            for(let i = 0; i < listanotification.length; i++ ){
+                const subscription = {
+                    endpoint: listanotification[i].endPoint,
+                    keys: {
+                        p256dh: listanotification[i].p256dh,
+                        auth: listanotification[i].auth
+                    }
+
+                };
+                WebPush.sendNotification(subscription, `O Conteudo do dia ${data.dia}/${data.mes}/${data.ano} do Clinete (${Cliente[0].user})- aguarda por aprovação!.`)
+                console.log(' corpo da notificação',subscription)
+            }
         }
         
         return{res}
@@ -267,6 +287,23 @@ export class CalendarioEditorial {
             res += 0;
         } else{
             res = await connection('calendario').where('id', test[0].id).update("aprovadoCrister",data.aprovadoCrister);
+            //mandar notifificação para o usuário - conteudo do dia x aguarda aprovação.
+                       
+            let listanotification = await connection('notifications').where('typeUser', 'Crister').select('*')
+            console.log('Lista', listanotification);
+            console.log('')
+            for(let i = 0; i < listanotification.length; i++ ){
+                const subscription = {
+                    endpoint: listanotification[i].endPoint,
+                    keys: {
+                        p256dh: listanotification[i].p256dh,
+                        auth: listanotification[i].auth
+                    }
+
+                };
+                WebPush.sendNotification(subscription, `O Conteudo do dia ${data.dia}/${data.mes}/${data.ano} - aguarda por sua aprovação!.`)
+                console.log(' corpo da notificação',subscription)
+            }
         }
         console.log(res,'<>')
         //  
@@ -408,7 +445,7 @@ export class CalendarioEditorial {
         // req para publicação do tipo  estático.
         try {
             // criar container de publicação:
-            let url: string = `https://graph.facebook.com/v14.0/${cliente.idPerfil}/media?image_url=https://images.pexels.com/photos/31068872/pexels-photo-31068872/free-photo-of-mulher-com-flores-em-scooter-em-ambiente-urbano.jpeg&caption=${encodeURIComponent(publicacao.legenda)}&access_token=${token}`
+            let url: string = `https://graph.facebook.com/v14.0/${cliente.idPerfil}/media?image_url=https://cristatusbackapp-production.up.railway.app/image/${publicacao.nomeArquivos}&caption=${encodeURIComponent(publicacao.legenda)}&access_token=${token}`
             const resp = await fetch(url, { method: 'POST' });
             // **aqui** extraímos o JSON
             respostaMetaPublicacao = await resp.json();
