@@ -9,11 +9,16 @@ export class RegisterUserController {
   @Post('registerUser')
   async Register(@Body() data: RegisterUserClietDTO): Promise<object> {
     return  this.registerUser.registerUser(data) // Usando a função do serviço para processar os dados
-  };
+  };// buscar usuários - cliente - todos.
   @Get('getUser')
   async getUser(@Body() data:RegisterUserClietDTO): Promise<object>{
     return await this.registerUser.getUser(data);
   };
+  // buscar um cliente especiufico:
+  @Post('getOne')
+  async getOneCliente(@Body() data: RegisterUserClietDTO): Promise<object>{
+    return await this.registerUser.getOneCliente(data);
+  }
   // registro de acessos no database:
   @Post('acessosCreate')
   async acessosCreate(@Body() data:RegisterUserClietDTO): Promise<object>{
@@ -29,6 +34,22 @@ export class RegisterUserController {
   @Post('tokenInsta')
   async updateTokenAcess(@Body() data: RegisterUserClietDTO): Promise<object>{
     return await this.registerUser.updateTokenAcess(data);
+  }
+  // atualização de dados do cliet :
+  // atualizando a senha do clienbte.
+  @Post('updateSenhaUser')
+  async updateSenhaUser(@Body() data: RegisterUserClietDTO): Promise<object>{
+    return await this.registerUser.updateSenhaUser(data)
+  };
+  // update faturamento 
+  @Post('updateFaturamento')
+  async dataFaturamento(@Body() data: RegisterUserClietDTO): Promise<object>{
+    return await this.registerUser.dataFaturamento(data);
+  };
+  //update hoprario de publicação:
+  @Post('updateHora')
+  async updateHora(@Body() data: RegisterUserClietDTO): Promise<object> {
+    return await this.registerUser.updateHora(data);
   }
 }
 

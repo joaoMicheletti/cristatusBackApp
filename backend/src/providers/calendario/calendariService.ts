@@ -480,9 +480,10 @@ export class CalendarioEditorial {
 
     // funcionalidade para cria um token no banco de dados:
     async createToken(data: CalendarioDTO): Promise<object>{
+        console.log('DATALMITE', data);
         let res = await connection('automacao').select('*');
         if(res.length > 0){
-            let update = await connection('automacao').where('id', res[0].id).update('token', data.token);
+            let update = await connection('automacao').where('id', res[0].id).update('token', data.token).update('datalimite',data.datalimite);
             return update;
         }else {
             let insert = await connection('automacao').insert(data);

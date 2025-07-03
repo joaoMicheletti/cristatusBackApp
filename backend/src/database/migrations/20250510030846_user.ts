@@ -11,6 +11,7 @@ export async function up(knex: Knex): Promise<void> {
         table.string("diaVencimento");
         table.string("token");
         table.string('idPerfil');
+        table.string('horario');
     });
 }
 

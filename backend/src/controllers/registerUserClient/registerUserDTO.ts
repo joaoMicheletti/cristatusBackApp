@@ -8,4 +8,6 @@ export class RegisterUserClietDTO {
     email: string;
     senha: string;
     idPerfil: string;
+    diaVencimento: string;
+    horario: string;
 }

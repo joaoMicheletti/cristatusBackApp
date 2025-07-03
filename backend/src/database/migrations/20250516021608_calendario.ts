@@ -22,6 +22,8 @@ export async function up(knex: Knex): Promise<void> {
         table.string("aprovadoCliente");
         table.string('idperfil');
         table.string('descricaoArte');
+        table.string('publicado');
+        table.string('hora');
     });
 }
 

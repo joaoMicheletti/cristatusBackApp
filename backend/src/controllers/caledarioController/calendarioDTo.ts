@@ -24,4 +24,5 @@ export class CalendarioDTO {
     descricaoArte: string;
     token: string;
     user: string;
+    datalimite:string;
 }

@@ -1,4 +1,6 @@
 import { Module } from '@nestjs/common';
+import { ScheduleModule } from '@nestjs/schedule';
+import {Automacao} from './providers/calendario/automacao';
 // login User Cliente
 import { LoginUserController } from './controllers/loginUserClient/luginUserController';
 import { LogunUserServices } from './providers/loginUserClient/loginUserservices';
@@ -19,9 +21,29 @@ import { UploadModule } from './controllers/caledarioController/uploadModules';
 //rota de notificatção.
 import { Notifications } from './controllers/notifications/notification';
 
+//cadastro de colaborador:
+import { colaboradorProvider } from './providers/colaborador/colaboradorService';
+import {colaboradorController} from './controllers/colaborador/colaboradorController';
 @Module({
-  imports: [UploadModule],
-  controllers: [LoginUserController, RegisterUserController, Calendario, LoginCristerController, Notifications],
-  providers: [LogunUserServices, RegisterUserServide, CalendarioEditorial, LoginCristerService, ],
+  imports: [
+    UploadModule, 
+    ScheduleModule.forRoot()
+  ],
+  controllers: [
+    colaboradorController, 
+    LoginUserController, 
+    RegisterUserController, 
+    Calendario, 
+    LoginCristerController, 
+    Notifications
+  ],
+  providers: [
+    Automacao, 
+    colaboradorProvider, 
+    LogunUserServices, 
+    RegisterUserServide, 
+    CalendarioEditorial, 
+    LoginCristerService, 
+  ],
 })
 export class AppModule {}

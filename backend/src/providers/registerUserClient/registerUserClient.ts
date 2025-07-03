@@ -39,6 +39,11 @@ export class RegisterUserServide {
         let res = await connection("cliente").select("*");
         return{res};
     };
+    // buscando um cliente especifico:
+    async getOneCliente(data: RegisterUserClietDTO): Promise<object>{
+        let res = await connection('cliente').where('token', data.token);
+        return{res}
+    }
     // registro de acesso no banco de dados:
     async acessosCreate(data: RegisterUserClietDTO): Promise<object> {
         let res = ''
@@ -66,5 +71,39 @@ export class RegisterUserServide {
             res += resp;
         }
         return{res} // atualizado com sucesso 
-    }
+    };
+    //atualizando dados do usuario:
+    async updateSenhaUser(data: RegisterUserClietDTO): Promise<object> {
+        let res = await connection('cliente').where('token', data.token)
+        .update('pass', data.pass);
+        console.log('!!!!!', res)
+        console.log('updateSenha', data);
+        if(res.length > 1){
+            return{res: 'senha atualizada com sucesso!'}
+        } else {
+            return{res: 'erro ao editar senha!'}
+        }
+        
+    };
+    // update data de faturamento:
+    async dataFaturamento(data: RegisterUserClietDTO): Promise<object>{
+        console.log('faturamento update', data);
+        let res = await connection('cliente').where('token', data.token)
+        .update('diaVencimento', data.diaVencimento);
+        if(res.length > 1){
+            return{res: 'data atualizada com sucesso!'}
+        } else {
+            return{res: 'erro ao editar Data de faturametno!'}
+        }
+    };
+    // update hora de publicar o material:
+    async updateHora(data: RegisterUserClietDTO): Promise<object> {
+        let res = await connection('cliente').where('token', data.token)
+        .update('horario', data.horario);
+        if(res.length > 0) {
+            return{res: 'Horário atualizado com sucesso.'};
+        } else {
+            return {res: 'Erro ao atualizar o Horário1'};
+        }
+    };
 };
