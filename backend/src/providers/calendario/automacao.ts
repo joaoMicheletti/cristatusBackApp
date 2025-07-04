@@ -2,11 +2,13 @@ import { Injectable, Logger } from '@nestjs/common';
 import { Cron } from '@nestjs/schedule';
 import { console } from 'inspector';
 import connection from 'src/database/connection';
+import axios from 'axios';
+import { URLSearchParams } from 'url';
 @Injectable()
 export class Automacao {
   private readonly logger = new Logger(Automacao.name);
 
-  @Cron('50 * * * * *')  async handleCron() {
+  @Cron('10 * * * * *')  async handleCron() {
     this.logger.debug('Called when the current second is 45');
     const data = new Date();
     const dia = data.getDate();// dia
@@ -30,7 +32,7 @@ export class Automacao {
             this.logger.debug('aqui é null', horaUser)
             // se for null efetuar a puyblicação com o horario definido por padrão na criação do calendario.
             // verificar se ahora do processamento é a mesma da publicação.
-            if(hora === 19 /*parseInt(publicao[cont].hora)*/){
+            if(hora === 20 /*parseInt(publicao[cont].hora)*/){
                 this.logger.debug(hora)
                 // verificar o formato da publicação
                 if(publicao[cont].formato === 'carrossel'){
@@ -38,7 +40,7 @@ export class Automacao {
                 } else if(publicao[cont].formato === 'estatico') {
                     this.logger.debug('estatico')
                     // efetuar apublicação no formato de video ou estatico.
-                    let url: string = `https://graph.facebook.com/v14.0/${horaUser[0].idPerfil}/media?image_url=https://cristatusbackapp-production.up.railway.app/image/${publicao[cont].nomeArquivos}&caption=${encodeURIComponent(publicao[cont].legenda)}&access_token=${chave[0].token}`
+                    let url: string = `https://graph.facebook.com/v23.0/${horaUser[0].idPerfil}/media?image_url=https://cristatusbackapp-production.up.railway.app/image/${publicao[cont].nomeArquivos}&caption=${encodeURIComponent(publicao[cont].legenda)}&access_token=${chave[0].token}`
                     // efetuar a criação do container :
                     this.logger.debug(url)
                     const resp = await fetch(url, { method: 'POST' });
@@ -48,7 +50,7 @@ export class Automacao {
                     // se ocorreu tudo bem  a resposta contera um id 
                     if(respostaMetaConteiner.id > 0){
                         // efetuar a publicação com o id do container:
-                        let urlCintainerID: string = `https://graph.facebook.com/v14.0/${horaUser[0].idPerfil}/media_publish?creation_id=${respostaMetaConteiner.id}&access_token=${chave[0].token}`;
+                        let urlCintainerID: string = `https://graph.facebook.com/v23.0/${horaUser[0].idPerfil}/media_publish?creation_id=${respostaMetaConteiner.id}&access_token=${chave[0].token}`;
                         const respostaPublicacao = await fetch(urlCintainerID, { method: 'POST' });
                         this.logger.debug('aque a resposta da publicação.', respostaPublicacao)
                         // atualizar o campo publicado para nao repiutir a publicação 
@@ -56,24 +58,35 @@ export class Automacao {
                         this.logger.debug(update)
                     }
                 } else if(publicao[cont].formato === 'video'){
-                    this.logger.debug('estatico/video')
-                    // efetuar apublicação no formato de video ou estatico.
-                    let url: string = `https://graph.facebook.com/v14.0/${horaUser[0].idPerfil}/media?video_url=https://cristatusbackapp-production.up.railway.app/image/${publicao[cont].nomeArquivos}&caption=${encodeURIComponent(publicao[cont].legenda)}&access_token=${chave[0].token}`
-                    // efetuar a criação do container :
-                    this.logger.debug(url)
-                    const resp = await fetch(url, { method: 'POST' });
-                    this.logger.debug(resp)
-                    // resposta da solisitação - paese Json
-                    let respostaMetaConteiner = await resp.json();
-                    // se ocorreu tudo bem  a resposta contera um id 
-                    if(respostaMetaConteiner.id > 0){
-                        // efetuar a publicação com o id do container:
-                        let urlCintainerID: string = `https://graph.facebook.com/v14.0/${horaUser[0].idPerfil}/media_publish?creation_id=${respostaMetaConteiner.id}&access_token=${chave[0].token}`;
-                        const respostaPublicacao = await fetch(urlCintainerID, { method: 'POST' });
-                        this.logger.debug('aque a resposta da publicação.', respostaPublicacao)
-                        // atualizar o campo publicado para nao repiutir a publicação 
-                        let update = await connection('calendario').where('id', publicao[cont].id).update('publicado', 'publicado');
-                        this.logger.debug(update)
+                    this.logger.debug('videoooooo')
+                    const formData = new URLSearchParams();
+                    formData.append('video_url', `https://cristatusbackapp-production.up.railway.app/image/${publicao[cont].nomeArquivos}`);
+                    formData.append('caption', publicao[cont].legenda);
+                    formData.append('access_token', chave[0].token);
+                    formData.append('media_type', 'REELS'); // necessário para vídeo
+
+                    const resp = await axios.post(
+                    `https://graph.facebook.com/v23.0/${horaUser[0].idPerfil}/media`,
+                    formData.toString(),
+                    {
+                        headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded'
+                        }
+                    }
+                    );
+
+                    const respostaMetaConteiner = resp.data;
+
+                    if (respostaMetaConteiner.id) {
+                    const urlCintainerID = `https://graph.facebook.com/v23.0/media_publish?creation_id=${respostaMetaConteiner.id}&access_token=${chave[0].token}`;
+                    const respostaPublicacao = await fetch(urlCintainerID, { method: 'POST' });
+
+                    this.logger.debug('resposta da publicação:', respostaPublicacao);
+
+                    const update = await connection('calendario')
+                        .where('id', publicao[cont].id)
+                        .update('publicado', 'publicado');
+                    this.logger.debug(update);
                     }
                 }               
             } else {
