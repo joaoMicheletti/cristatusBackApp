@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
 import { ScheduleModule } from '@nestjs/schedule';
-//import {Automacao} from './providers/calendario/automacao';
+import {Automacao} from './providers/calendario/automacao';
 // login User Cliente
 import { LoginUserController } from './controllers/loginUserClient/luginUserController';
 import { LogunUserServices } from './providers/loginUserClient/loginUserservices';
@@ -38,7 +38,7 @@ import {colaboradorController} from './controllers/colaborador/colaboradorContro
     Notifications
   ],
   providers: [
-    //Automacao, 
+    Automacao, 
     colaboradorProvider, 
     LogunUserServices, 
     RegisterUserServide, 
