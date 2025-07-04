@@ -10,6 +10,7 @@ import * as WebPush from 'web-push';
 
 export class CalendarioEditorial {
     async createCalendario(data: CalendarioDTO): Promise<object>{ 
+        console.log('dataCrono',data)
         console.log(data);       
         let resp = await connection("calendario").insert(data);
         console.log(resp);
@@ -425,57 +426,8 @@ export class CalendarioEditorial {
             .where('id', data.id)
             .update({ aprovadoCliente: 'aprovado' });
 
-        // 2) Busca a publicação
-        const [publicacao] = await connection('calendario')
-            .where('id', data.id)
-            .select('*');
-        // hora ficvticia da publicação - por enquanto nao temos ela no banco de dados. e se nao tiver a hora registrada uar essa hora :
-        // Date.UTC cria a data em UTC: ano, mês (0–11), dia, hora, min, seg → ms
-        const ms = Date.UTC(publicacao.ano, publicacao.mes - 1, publicacao.dia, 11, 0, 0);
-        const time = Math.floor(ms/ 1000);
-
-        // 3) Busca token META
-        const [{ token }] = await connection('automacao').select('token');
-
-        // 4) Busca dados do cliente (se precisar)
-        const [cliente] = await connection('cliente').where('token', data.tokenUser).select('*');
-
-        let respostaMetaPublicacao: any = null;
-        // para publicações estaticas e vídeos acessar esse requisição.
-        // req para publicação do tipo  estático.
-        try {
-            // criar container de publicação:
-            let url: string = `https://graph.facebook.com/v14.0/${cliente.idPerfil}/media?image_url=https://cristatusbackapp-production.up.railway.app/image/${publicacao.nomeArquivos}&caption=${encodeURIComponent(publicacao.legenda)}&access_token=${token}`
-            const resp = await fetch(url, { method: 'POST' });
-            // **aqui** extraímos o JSON
-            respostaMetaPublicacao = await resp.json();
-            // nova req para efetuar o agendamento da publicação/URIComponente()
-            if(respostaMetaPublicacao.id > 0){
-                // pegar a resposta e enviar pra a nova req para efetuar a publicação.
-                let urlContainer: string =`https://graph.facebook.com/v14.0/${cliente.idPerfil}/media_publish?creation_id=${respostaMetaPublicacao.id}&access_token=${token}`; 
-                const respContainer = await fetch(urlContainer, { method: 'POST' });
-                respostaMetaPublicacao = respContainer;
-            } else {
-                // erro ao gerar container
-                respostaMetaPublicacao = 'Não  foi possivel seguir com o processo de publicação.'
-            }
-        } catch (error) {
-            console.error('Erro na publicação META:', error);
-            // pode atribuir null ou o próprio erro, conforme sua necessidade
-            respostaMetaPublicacao = { error: (error as Error).message };
-        }
-
         // 5) Retorna tudo*/
-        return {
-            response,
-            publicacao,
-            cliente,
-            respostaMetaPublicacao,
-            token,
-            //url, 
-            //test: encodeURIComponent(publicacao.legenda),
-            //time: time
-        };
+        return {res: response};
     }
 
     // funcionalidade para cria um token no banco de dados:
