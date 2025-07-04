@@ -38,7 +38,7 @@ import {colaboradorController} from './controllers/colaborador/colaboradorContro
     Notifications
   ],
   providers: [
-    //Automacao, 
+  //  Automacao, 
     colaboradorProvider, 
     LogunUserServices, 
     RegisterUserServide, 
