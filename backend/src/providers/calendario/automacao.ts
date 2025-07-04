@@ -38,7 +38,7 @@ export class Automacao {
                 } else {
                     this.logger.debug('estatico/video')
                     // efetuar apublicação no formato de video ou estatico.
-                    let url: string = `https://graph.facebook.com/v14.0/${horaUser[0].idPerfil}/media?image_url=https://cristatusbackapp-production.up.railway.app/image/${publicao[cont].nomeArquivos}&caption=${encodeURIComponent(publicao[cont].legenda)}&access_token=${chave[0].token}`
+                    let url: string = `https://graph.facebook.com/v14.0/${horaUser[0].idPerfil}/media?video_url=https://cristatusbackapp-production.up.railway.app/image/${publicao[cont].nomeArquivos}&caption=${encodeURIComponent(publicao[cont].legenda)}&access_token=${chave[0].token}`
                     // efetuar a criação do container :
                     const resp = await fetch(url, { method: 'POST' });
                     this.logger.debug(resp)
