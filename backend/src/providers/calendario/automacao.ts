@@ -6,7 +6,7 @@ import axios from 'axios';
 @Injectable()
 export class Automacao {
   private readonly logger = new Logger(Automacao.name);
-  @Cron('50 * * * * *')  async handleCron() {
+  @Cron('*/2 * * * *')  async handleCron() {
     this.logger.debug('Called when the current second is 45');
     const data = new Date();
     const dia = data.getDate();// dia
@@ -31,7 +31,7 @@ export class Automacao {
             this.logger.debug('aqui é null', horaUser)
             // se for null efetuar a puyblicação com o horario definido por padrão na criação do calendario.
             // verificar se ahora do processamento é a mesma da publicação.
-            if(hora === 0 /*parseInt(publicao[cont].hora)*/){
+            if(hora === 2 /*parseInt(publicao[cont].hora)*/){
                 this.logger.debug(hora)
                 // verificar o formato da publicação
                 if(publicao[cont].formato === 'carrossel'){
@@ -58,84 +58,37 @@ export class Automacao {
                     }
                 } else if(publicao[cont].formato === 'video'){0
                     this.logger.debug('videoooooo');
-                    // 1. Criar contêiner com tipo resumable
-                    const containerRes = await axios.post(
-                    `https://graph.facebook.com/v23.0/${horaUser[0].idPerfil}/media`,
-                    null,
-                    {
-                        params: {
+                    const createRes = await axios.post(
+                    `https://graph.facebook.com/v20.0/${horaUser[0].idPerfil}/media`,
+                    new URLSearchParams({
                         media_type: 'REELS',
-                        upload_type: 'resumable',
+                        video_url: `https://cristatusbackapp-production.up.railway.app/image/${publicao[cont].nomeArquivos}`,
                         caption: publicao[cont].legenda,
                         access_token: chave[0].token,
-                        },
-                    }
+                    }),
                     );
 
-                    const containerId = containerRes.data.id;
-                    const uploadUri = containerRes.data.uri;
-                    this.logger.debug('Contêiner criado:', containerId);
-
-                    // 2. Upload do vídeo no rupload_uri usando apenas file_url
-                    const ruploadHeaders = {
-                    Authorization: `OAuth ${chave[0].token}`,
-                    offset: '0',
-                    'file_url': `https://cristatusbackapp-production.up.railway.app/image/${publicao[cont].nomeArquivos}`,
-                    };
-
-                    const uploadResp = await axios.post(
-                    uploadUri,
-                    null,
-                    {
-                        headers: ruploadHeaders,
-                    }
-                    );
-
-                    if (!uploadResp.data.success) {
-                    throw new Error('Erro no upload do vídeo.');
-                    }
-
-                    this.logger.debug('Upload concluído:', uploadResp.data);
-
-                    // 3. Aguardar processamento
-                    let status = '';
-                    let tentativas = 0;
-                    do {
-                    tentativas++;
-                    const statusResp = await axios.get(
-                        `https://graph.facebook.com/v23.0/${containerId}`,
-                        {
-                        params: {
-                            fields: 'status_code',
-                            access_token: chave[0].token,
-                        },
-                        }
-                    );
-                    status = statusResp.data.status_code;
-                    console.log(`Tentativa ${tentativas}: status = ${status}`);
-                    if (status !== 'FINISHED') {
-                        await new Promise((res) => setTimeout(res, 3000));
-                    }
-                    } while (status !== 'FINISHED' && tentativas < 10);
-
-                    if (status !== 'FINISHED') {
-                    console.error('O vídeo não foi processado a tempo.');
+                    this.logger.debug('📦 Container criado com sucesso:');
+                    this.logger.debug(JSON.stringify(createRes.data, null, 2));
+                    const containerId = createRes.data.id;
+                    if (!containerId) {
+                    this.logger.debug('❌ Container ID não retornado');
                     return;
-                    }
+                    };
+                    // 2. Esperar processamento (Instagram recomenda 30s~60s)
+                    this.logger.debug('⏳ Aguardando 60 segundos para o processamento do vídeo...');
+                    await new Promise((resolve) => setTimeout(resolve, 60000));
 
-                    // 4. Publicar o conteúdo
-                    const publishResp = await axios.post(
-                    `https://graph.facebook.com/v23.0/${horaUser[0].idPerfil}/media_publish`,
-                    null,
-                    {
-                        params: {
+                    // 3. Publicar o vídeo (Reel)
+                    const publishRes = await axios.post(
+                    `https://graph.facebook.com/v20.0/${horaUser[0].idPerfil}/media_publish`,
+                    new URLSearchParams({
                         creation_id: containerId,
                         access_token: chave[0].token,
-                        },
-                    }
+                    }),
                     );
+                    this.logger.debug(publishRes);
 
-                    console.log('Resultado da publicação:', publishResp.data);
                 }
             } else {
                 this.logger.debug('nao esta na hora de efetuar apublicvação desse post');
