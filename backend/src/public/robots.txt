@@ -1,0 +1,8 @@
+User-agent: *
+Allow: /
+
+User-agent: FacebookBot
+Allow: /
+
+User-agent: Instagram
+Allow: /

@@ -3,11 +3,10 @@ import { Cron } from '@nestjs/schedule';
 import { console } from 'inspector';
 import connection from 'src/database/connection';
 import axios from 'axios';
-import { URLSearchParams } from 'url';
 @Injectable()
 export class Automacao {
   private readonly logger = new Logger(Automacao.name);
-  @Cron('40 * * * * *')  async handleCron() {
+  @Cron('50 * * * * *')  async handleCron() {
     this.logger.debug('Called when the current second is 45');
     const data = new Date();
     const dia = data.getDate();// dia
@@ -59,6 +58,7 @@ export class Automacao {
                     }
                 } else if(publicao[cont].formato === 'video'){0
                     this.logger.debug('videoooooo');
+                    // 1. Criar contêiner com tipo resumable
                     const containerRes = await axios.post(
                     `https://graph.facebook.com/v23.0/${horaUser[0].idPerfil}/media`,
                     null,
@@ -71,40 +71,33 @@ export class Automacao {
                         },
                     }
                     );
-                    this.logger.debug(containerRes)
+
                     const containerId = containerRes.data.id;
                     const uploadUri = containerRes.data.uri;
                     this.logger.debug('Contêiner criado:', containerId);
-                    // 2. Obter tamanho do vídeo de forma segura
-                    const videoUrl = `https://cristatusbackapp-production.up.railway.app/image/${publicao[cont].nomeArquivos}`;
 
-                    let fileSize: any = '';
-                    try {
-                        const headResponse = await axios.head(videoUrl);
-                        fileSize = headResponse.headers['content-length'] || headResponse.headers['Content-Length'];
-                    } catch (err) {
-                        this.logger.warn('Axios HEAD falhou, tentando fallback com fetch...');
-                        const fallbackResp = await fetch(videoUrl, { method: 'HEAD' });
-                        fileSize = fallbackResp.headers.get('content-length');
-                    }
-                    if (!fileSize) {
-                        throw new Error('Não foi possível obter o tamanho do vídeo (Content-Length). Verifique se o servidor fornece esse cabeçalho.');
-                    }
-                    // 3. Upload do vídeo
+                    // 2. Upload do vídeo no rupload_uri usando apenas file_url
                     const ruploadHeaders = {
-                        Authorization: `OAuth ${chave[0].token}`,
-                        offset: '0',
-                        'file_size': fileSize,
-                        'file_url': videoUrl,
+                    Authorization: `OAuth ${chave[0].token}`,
+                    offset: '0',
+                    'file_url': `https://cristatusbackapp-production.up.railway.app/image/${publicao[cont].nomeArquivos}`,
                     };
-                    const uploadResp = await axios.post(uploadUri, null, { headers: ruploadHeaders });
+
+                    const uploadResp = await axios.post(
+                    uploadUri,
+                    null,
+                    {
+                        headers: ruploadHeaders,
+                    }
+                    );
 
                     if (!uploadResp.data.success) {
-                        throw new Error('Erro no upload do vídeo.');
+                    throw new Error('Erro no upload do vídeo.');
                     }
-                    console.log('Upload concluído:', uploadResp.data);
 
-                    // 4. Aguardar processamento
+                    this.logger.debug('Upload concluído:', uploadResp.data);
+
+                    // 3. Aguardar processamento
                     let status = '';
                     let tentativas = 0;
                     do {
@@ -129,7 +122,8 @@ export class Automacao {
                     console.error('O vídeo não foi processado a tempo.');
                     return;
                     }
-                    // 5. Publicar o conteúdo
+
+                    // 4. Publicar o conteúdo
                     const publishResp = await axios.post(
                     `https://graph.facebook.com/v23.0/${horaUser[0].idPerfil}/media_publish`,
                     null,
