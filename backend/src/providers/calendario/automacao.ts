@@ -7,8 +7,7 @@ import { URLSearchParams } from 'url';
 @Injectable()
 export class Automacao {
   private readonly logger = new Logger(Automacao.name);
-
-  @Cron('10 * * * * *')  async handleCron() {
+  @Cron('40 * * * * *')  async handleCron() {
     this.logger.debug('Called when the current second is 45');
     const data = new Date();
     const dia = data.getDate();// dia
@@ -20,6 +19,7 @@ export class Automacao {
     .where('aprovadoCliente', 'aprovado')
     .where('publicado', null)// buscar publicações  com base na  data de hoje e hora atual.
     const chave = await connection('automacao').select('token')
+    this.logger.debug(hora === 0);
 
     // fazer um loop para cada publicação encontrada. 
     let cont = 0;
@@ -32,7 +32,7 @@ export class Automacao {
             this.logger.debug('aqui é null', horaUser)
             // se for null efetuar a puyblicação com o horario definido por padrão na criação do calendario.
             // verificar se ahora do processamento é a mesma da publicação.
-            if(hora === 20 /*parseInt(publicao[cont].hora)*/){
+            if(hora === 0 /*parseInt(publicao[cont].hora)*/){
                 this.logger.debug(hora)
                 // verificar o formato da publicação
                 if(publicao[cont].formato === 'carrossel'){
@@ -57,13 +57,109 @@ export class Automacao {
                         let update = await connection('calendario').where('id', publicao[cont].id).update('publicado', 'publicado');
                         this.logger.debug(update)
                     }
-                } else if(publicao[cont].formato === 'video'){
-                    this.logger.debug('videoooooo')
-                    const formData = new URLSearchParams();
+                } else if(publicao[cont].formato === 'video'){0
+                    this.logger.debug('videoooooo');
+                    const containerRes = await axios.post(
+                    `https://graph.facebook.com/v23.0/${horaUser[0].idPerfil}/media`,
+                    null,
+                    {
+                        params: {
+                        media_type: 'REELS',
+                        upload_type: 'resumable',
+                        caption: publicao[cont].legenda,
+                        access_token: chave[0].token,
+                        },
+                    }
+                    );
+                    this.logger.debug(containerRes)
+                    const containerId = containerRes.data.id;
+                    const uploadUri = containerRes.data.uri;
+                    this.logger.debug('Contêiner criado:', containerId);
+                    // 2. Obter tamanho do vídeo de forma segura
+                    const videoUrl = `https://cristatusbackapp-production.up.railway.app/image/${publicao[cont].nomeArquivos}`;
+
+                    let fileSize: any = '';
+                    try {
+                        const headResponse = await axios.head(videoUrl);
+                        fileSize = headResponse.headers['content-length'] || headResponse.headers['Content-Length'];
+                    } catch (err) {
+                        this.logger.warn('Axios HEAD falhou, tentando fallback com fetch...');
+                        const fallbackResp = await fetch(videoUrl, { method: 'HEAD' });
+                        fileSize = fallbackResp.headers.get('content-length');
+                    }
+                    if (!fileSize) {
+                        throw new Error('Não foi possível obter o tamanho do vídeo (Content-Length). Verifique se o servidor fornece esse cabeçalho.');
+                    }
+                    // 3. Upload do vídeo
+                    const ruploadHeaders = {
+                        Authorization: `OAuth ${chave[0].token}`,
+                        offset: '0',
+                        'file_size': fileSize,
+                        'file_url': videoUrl,
+                    };
+                    const uploadResp = await axios.post(uploadUri, null, { headers: ruploadHeaders });
+
+                    if (!uploadResp.data.success) {
+                        throw new Error('Erro no upload do vídeo.');
+                    }
+                    console.log('Upload concluído:', uploadResp.data);
+
+                    // 4. Aguardar processamento
+                    let status = '';
+                    let tentativas = 0;
+                    do {
+                    tentativas++;
+                    const statusResp = await axios.get(
+                        `https://graph.facebook.com/v23.0/${containerId}`,
+                        {
+                        params: {
+                            fields: 'status_code',
+                            access_token: chave[0].token,
+                        },
+                        }
+                    );
+                    status = statusResp.data.status_code;
+                    console.log(`Tentativa ${tentativas}: status = ${status}`);
+                    if (status !== 'FINISHED') {
+                        await new Promise((res) => setTimeout(res, 3000));
+                    }
+                    } while (status !== 'FINISHED' && tentativas < 10);
+
+                    if (status !== 'FINISHED') {
+                    console.error('O vídeo não foi processado a tempo.');
+                    return;
+                    }
+                    // 5. Publicar o conteúdo
+                    const publishResp = await axios.post(
+                    `https://graph.facebook.com/v23.0/${horaUser[0].idPerfil}/media_publish`,
+                    null,
+                    {
+                        params: {
+                        creation_id: containerId,
+                        access_token: chave[0].token,
+                        },
+                    }
+                    );
+
+                    console.log('Resultado da publicação:', publishResp.data);
+                }
+            } else {
+                this.logger.debug('nao esta na hora de efetuar apublicvação desse post');
+            }
+        }
+        cont+= 1;
+    }; 
+  }
+}
+/**
+ * 
+ * 
+ * const formData = new URLSearchParams();
                     formData.append('video_url', `https://cristatusbackapp-production.up.railway.app/image/${publicao[cont].nomeArquivos}`);
                     formData.append('caption', publicao[cont].legenda);
                     formData.append('access_token', chave[0].token);
                     formData.append('media_type', 'REELS'); // necessário para vídeo
+                    formData.append('share_to_feed', 'true'); // ✅ necessário para REELS
 
                     const resp = await axios.post(
                     `https://graph.facebook.com/v23.0/${horaUser[0].idPerfil}/media`,
@@ -76,41 +172,50 @@ export class Automacao {
                     );
 
                     const respostaMetaConteiner = resp.data;
+                    this.logger.debug(resp);
 
-                    if (respostaMetaConteiner.id) {
-                    const urlCintainerID = `https://graph.facebook.com/v23.0/media_publish?creation_id=${respostaMetaConteiner.id}&access_token=${chave[0].token}`;
-                    const respostaPublicacao = await fetch(urlCintainerID, { method: 'POST' });
+ * let status = '';
+                    let tentativas = 0;
 
-                    this.logger.debug('resposta da publicação:', respostaPublicacao);
+                    do {
+                    tentativas++;
+                    const statusResp = await fetch(
+                        `https://graph.facebook.com/v23.0/${respostaMetaConteiner.id}?fields=status_code&access_token=${chave[0].token}`
+                    );
+                    const statusData = await statusResp.json();
+                    status = statusData.status_code;
 
-                    const update = await connection('calendario')
-                        .where('id', publicao[cont].id)
-                        .update('publicado', 'publicado');
-                    this.logger.debug(update);
+                    this.logger.debug(`Tentativa ${tentativas} - Status: ${status}`);
+
+                    if (status !== 'FINISHED') {
+                        await new Promise(resolve => setTimeout(resolve, 4000)); // espera 4 segundos
                     }
-                }               
-            } else {
+                    } while (status !== 'FINISHED' && tentativas < 20); // até 40s no máximo
 
-                this.logger.debug('não esta na hora de efetuar apublicação', chave[0].token);
-            };
-        } else  { // se nao for nulo efetuar a publicação no horario definido na tabel cliente 
-            // verificar se  esta na hora de efetuar apublicação;
-            if(hora === parseInt(horaUser[0].hora)){
-                // verificar o formato da publicação:
-                if(publicao[cont].formato === 'carrossel'){
+                    if (status === 'FINISHED') {
+                        await new Promise(resolve => setTimeout(resolve, 4000)); // espera 2 segundos
+                        const publishResponse = await fetch(
+                            `https://graph.facebook.com/v23.0/${horaUser[0].idPerfil}/media_publish?creation_id=${respostaMetaConteiner.id}&access_token=${chave[0].token}`,
+                            { method: 'POST' }
+                        );
+                        const resultado = await publishResponse.json();
+                        this.logger.debug('Resultado da publicação:', publishResponse);
+                    } else {
+                        this.logger.error('O vídeo não ficou pronto a tempo para publicação.');
+                    }
 
-                } else {
-                    //efetuar a publicação no formato de video e estatico.
-                }
-                // efetuar apublicação.
-            } else {
-                this.logger.debug('Não esta na hora de efetuar apublicação.');
-            }
-        }
-        this.logger.debug(horaUser[0].horario === null)   
-          
-        
-        cont+= 1;
-    };    
-  }
-}
+
+                    /*if (respostaMetaConteiner.id) {
+                        const publishResponse = await fetch(`https://graph.facebook.com/v23.0/${horaUser[0].idPerfil}/media_publish?creation_id=${respostaMetaConteiner.id}&access_token=${chave[0].token}`, {
+                        method: 'POST'
+                        });
+
+
+                        const resultado = await publishResponse.json();
+                        this.logger.debug('Resultado da publicação', resultado);
+
+                        //const update = await connection('calendario')
+                        //  .where('id', publicao[cont].id)
+                            //.update('publicado', 'publicado');
+                        //this.logger.debug(update);
+                    }*/
