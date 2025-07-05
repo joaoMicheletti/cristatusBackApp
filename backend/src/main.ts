@@ -18,34 +18,34 @@ async function bootstrap() {
   app.enableCors(corsOptions);
 
   const publicDir = path.join(__dirname, '..', '..', 'src', 'public');
+ // 1. Servir robots.txt corretamente para Meta
+app.use('/robots.txt', (req, res) => {
+  res
+    .type('text/plain')
+    .send(`User-agent: *\nAllow: /\nUser-agent: FacebookBot\nAllow: /\nUser-agent: Instagram\nAllow: /`);
+});
 
-  app.use('/image', (req, res, next) => {
+// 2. Middleware para vídeos
+app.use('/image', (req, res, next) => {
   const filePath = path.join(publicDir, req.path);
-  console.log('Arquivo solicitado:', filePath);
 
   if (!fs.existsSync(filePath)) {
-    console.log('Arquivo não encontrado:', filePath);
     return res.status(404).send('Arquivo não encontrado');
   }
 
   if (filePath.toLowerCase().endsWith('.mp4')) {
-    console.log('Requisição de vídeo mp4');
-    
     const stat = fs.statSync(filePath);
     const fileSize = stat.size;
 
     res.setHeader('Content-Type', 'video/mp4');
     res.setHeader('Content-Disposition', 'inline');
-    res.setHeader('Content-Length', fileSize); // 🚨 necessário para o Instagram
+    res.setHeader('Content-Length', fileSize); // 💡 essencial
 
-    const stream = fs.createReadStream(filePath);
-    return stream.pipe(res);
+    return fs.createReadStream(filePath).pipe(res);
   }
 
-  // Se não for .mp4, delega para o middleware estático padrão
   express.static(publicDir)(req, res, next);
-  });
-
+});
   await app.listen(3333);
   console.log(`Aplicação rodando em: http://localhost:3333`);
 }
