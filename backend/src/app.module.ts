@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { ScheduleModule } from '@nestjs/schedule';
+import { ConfigModule } from '@nestjs/config';
 //import {Automacao} from './providers/calendario/automacao';
 // login User Cliente
 import { LoginUserController } from './controllers/loginUserClient/luginUserController';
@@ -28,6 +29,9 @@ import {colaboradorController} from './controllers/colaborador/colaboradorContro
 import { CallBackController } from './controllers/callbakFacebbok';
 @Module({
   imports: [
+    ConfigModule.forRoot({
+      isGlobal: true, // permite usar process.env em todo o app
+    }),
     UploadModule, 
     ScheduleModule.forRoot()
   ],

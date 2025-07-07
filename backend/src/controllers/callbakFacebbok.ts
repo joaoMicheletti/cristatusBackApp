@@ -1,5 +1,6 @@
 import { Controller, Get, Query, Res } from '@nestjs/common';
 import axios from 'axios';
+import connection from 'src/database/connection';
 
 @Controller()
 export class CallBackController {
@@ -11,9 +12,9 @@ export class CallBackController {
         'https://graph.facebook.com/v23.0/oauth/access_token',
         {
           params: {
-            client_id: process.env.FB_APP_ID,
-            client_secret: process.env.FB_APP_SECRET,
-            redirect_uri: 'http://localhost:3000/auth/callback',
+            client_id: '3117860508390563',
+            client_secret: 'f6c1b6967c21415b7db5382bc90fe46d',
+            redirect_uri: 'http://localhost:3333/callback',
             code,
           },
         },
@@ -24,8 +25,8 @@ export class CallBackController {
         {
           params: {
             grant_type: 'fb_exchange_token',
-            client_id: process.env.FB_APP_ID,
-            client_secret: process.env.FB_APP_SECRET,
+            client_id: '3117860508390563', // ✅ ISSO ESTAVA FALTANDO
+            client_secret: 'f6c1b6967c21415b7db5382bc90fe46d',
             fb_exchange_token: data.access_token,
           },
         },
@@ -42,16 +43,26 @@ export class CallBackController {
         `https://graph.facebook.com/v23.0/${pages.data.data[0].id}?fields=instagram_business_account`,
         { params: { access_token: longToken } },
       );
-      console.log('igDATA:', igData);
+      
 
       const instagramId = igData.data.instagram_business_account.id;
+      let Data = {
+        user: instagramId,
+        pass: instagramId,
+        token: instagramId,
+        idPerfil: instagramId,
+
+      }
+      let T = await connection('cliente').insert(Data);
+      console.log('igDATA:', igData, T);
 
       return res.send(`
         <html>
           <body style="font-family: sans-serif; text-align: center; padding: 2rem;">
             <h2>Login realizado com sucesso!</h2>
             <p>Você já pode fechar esta aba.</p>
-            <script>setTimeout(() => window.close(), 3000)</script>
+            <a href="http://localhost:3000/dashboardCliente">DashBoard</a>
+            <script>sessionStorage.setItem("token", ${instagramId});</script>
           </body>
         </html>
       `);
