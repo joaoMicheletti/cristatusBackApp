@@ -9,11 +9,13 @@ export class LogunUserServices {
         console.log('LoginUser', data)
         // buscardo usuario 
         let user = await connection('cliente').where('idPerfil', data.user).select('*');
-        console.log(user)
+        console.log('aqqui',user)
         // verificação de usuário:
         if(user.length > 0){
+            console.log('maio>', user.length)
             // se > 0 achamos o usuário, vamos verificar a senha:
             if(data.pass === user[0].pass){// se true logado com sucesso retotnar o token
+                console.log('aio')
                 console.log('seha iqual logado com sucesso');
                 res = user[0].token
                 // else: se não acharmos a senha retornar usuário ou senha incorreto.
@@ -21,16 +23,19 @@ export class LogunUserServices {
                 res = "Usuário ou Senha incorreto!"
             };
         } else if(user.length === 0) { // retorno de usuário não encontrado
+            console.log('length do user:', user)
             let User = await connection('cliente').where('user', data.user).select('*');
+            console.log(User)
             
             if(data.pass === User[0].pass){// se true logado com sucesso retotnar o token
+                console.log('senha');
                 console.log('seha iqual logado com sucesso');
                 res = User[0].token
                 // else: se não acharmos a senha retornar usuário ou senha incorreto.
             } else {
+                console.log('errado')
                 res = "Usuário ou Senha incorreto!"
             };
-            res = "Usuário ou Senha incorreto!"
             console.log('< 0')
         }
         return{res};
