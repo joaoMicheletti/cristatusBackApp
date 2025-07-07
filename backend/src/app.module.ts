@@ -24,12 +24,15 @@ import { Notifications } from './controllers/notifications/notification';
 //cadastro de colaborador:
 import { colaboradorProvider } from './providers/colaborador/colaboradorService';
 import {colaboradorController} from './controllers/colaborador/colaboradorController';
+//callback
+import { CallBackController } from './controllers/callbakFacebbok';
 @Module({
   imports: [
     UploadModule, 
     ScheduleModule.forRoot()
   ],
   controllers: [
+    CallBackController,
     colaboradorController, 
     LoginUserController, 
     RegisterUserController, 

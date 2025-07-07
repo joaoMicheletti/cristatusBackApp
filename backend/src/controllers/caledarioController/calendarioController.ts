@@ -1,6 +1,7 @@
-import { Body, Controller, Get, Post } from "@nestjs/common";
+import { Body, Controller, Get, Post, Query, Res } from "@nestjs/common";
 import { CalendarioEditorial } from '../../providers/calendario/calendariService';
 import {CalendarioDTO} from './calendarioDTo' 
+import axios from "axios";
 
 @Controller()
 
@@ -90,5 +91,4 @@ export class Calendario {
     async createToken(@Body() data: CalendarioDTO): Promise<object>{
         return await this.CalendarioEditorial.createToken(data);
     }
-
 }
