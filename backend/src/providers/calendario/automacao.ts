@@ -3,10 +3,12 @@ import { Cron } from '@nestjs/schedule';
 import { console } from 'inspector';
 import connection from 'src/database/connection';
 import axios from 'axios';
+const ffmpeg = require('fluent-ffmpeg');
+const ffmpegPath = require('ffmpeg-static');
 @Injectable()
 export class Automacao {
   private readonly logger = new Logger(Automacao.name);
-  @Cron('*/2 * * * *')  async handleCron() {
+  @Cron('50 * * * * *')  async handleCron() {
     this.logger.debug('Called when the current second is 45');
     const data = new Date();
     const dia = data.getDate();// dia
@@ -31,7 +33,7 @@ export class Automacao {
             this.logger.debug('aqui é null', horaUser)
             // se for null efetuar a puyblicação com o horario definido por padrão na criação do calendario.
             // verificar se ahora do processamento é a mesma da publicação.
-            if(hora === 2 /*parseInt(publicao[cont].hora)*/){
+            if(hora === 21 /*parseInt(publicao[cont].hora)*/){
                 this.logger.debug(hora)
                 // verificar o formato da publicação
                 if(publicao[cont].formato === 'carrossel'){
@@ -58,6 +60,37 @@ export class Automacao {
                     }
                 } else if(publicao[cont].formato === 'video'){0
                     this.logger.debug('videoooooo');
+                    // antes de crair o container vamos processar o video.
+                    async function corrigirVideo(inputPath: string, outputPath: string): Promise<void> {
+                        if (!inputPath || !outputPath) {
+                            throw new Error('Caminhos de input ou output estão indefinidos!');
+                        }
+
+                        return new Promise((resolve, reject) => {
+                            ffmpeg(inputPath)
+                            .videoCodec('libx264')
+                            .audioCodec('aac')
+                            .audioChannels(2)
+                            .audioFrequency(44100)
+                            .audioBitrate('128k')
+                            .size('1080x1920')
+                            .aspect('9:16')
+                            .outputOptions('-pix_fmt yuv420p')
+                            .on('end', () => resolve())
+                            .on('error', err => reject(new Error('Erro ao processar vídeo: ' + err.message)))
+                            .save(outputPath);
+                        });
+                    };
+                    this.logger.debug('processando o Vídeo...');
+                    await corrigirVideo(
+                        `src/public/${publicao[cont].nomeArquivos}`,
+                        `src/public/processed-${publicao[cont].nomeArquivos}`
+                    );
+
+
+
+                    /**
+                     * 
                     const createRes = await axios.post(
                     `https://graph.facebook.com/v20.0/${horaUser[0].idPerfil}/media`,
                     new URLSearchParams({
@@ -77,7 +110,7 @@ export class Automacao {
                     };
                     // 2. Esperar processamento (Instagram recomenda 30s~60s)
                     this.logger.debug('⏳ Aguardando 60 segundos para o processamento do vídeo...');
-                    await new Promise((resolve) => setTimeout(resolve, 60000));
+                    await new Promise((resolve) => setTimeout(resolve, 30000));
 
                     // 3. Publicar o vídeo (Reel)
                     const publishRes = await axios.post(
@@ -88,6 +121,8 @@ export class Automacao {
                     }),
                     );
                     this.logger.debug(publishRes);
+                    
+                     */
 
                 }
             } else {
@@ -98,71 +133,3 @@ export class Automacao {
     }; 
   }
 }
-/**
- * 
- * 
- * const formData = new URLSearchParams();
-                    formData.append('video_url', `https://cristatusbackapp-production.up.railway.app/image/${publicao[cont].nomeArquivos}`);
-                    formData.append('caption', publicao[cont].legenda);
-                    formData.append('access_token', chave[0].token);
-                    formData.append('media_type', 'REELS'); // necessário para vídeo
-                    formData.append('share_to_feed', 'true'); // ✅ necessário para REELS
-
-                    const resp = await axios.post(
-                    `https://graph.facebook.com/v23.0/${horaUser[0].idPerfil}/media`,
-                    formData.toString(),
-                    {
-                        headers: {
-                        'Content-Type': 'application/x-www-form-urlencoded'
-                        }
-                    }
-                    );
-
-                    const respostaMetaConteiner = resp.data;
-                    this.logger.debug(resp);
-
- * let status = '';
-                    let tentativas = 0;
-
-                    do {
-                    tentativas++;
-                    const statusResp = await fetch(
-                        `https://graph.facebook.com/v23.0/${respostaMetaConteiner.id}?fields=status_code&access_token=${chave[0].token}`
-                    );
-                    const statusData = await statusResp.json();
-                    status = statusData.status_code;
-
-                    this.logger.debug(`Tentativa ${tentativas} - Status: ${status}`);
-
-                    if (status !== 'FINISHED') {
-                        await new Promise(resolve => setTimeout(resolve, 4000)); // espera 4 segundos
-                    }
-                    } while (status !== 'FINISHED' && tentativas < 20); // até 40s no máximo
-
-                    if (status === 'FINISHED') {
-                        await new Promise(resolve => setTimeout(resolve, 4000)); // espera 2 segundos
-                        const publishResponse = await fetch(
-                            `https://graph.facebook.com/v23.0/${horaUser[0].idPerfil}/media_publish?creation_id=${respostaMetaConteiner.id}&access_token=${chave[0].token}`,
-                            { method: 'POST' }
-                        );
-                        const resultado = await publishResponse.json();
-                        this.logger.debug('Resultado da publicação:', publishResponse);
-                    } else {
-                        this.logger.error('O vídeo não ficou pronto a tempo para publicação.');
-                    }
-
-
-                    /*if (respostaMetaConteiner.id) {
-                        const publishResponse = await fetch(`https://graph.facebook.com/v23.0/${horaUser[0].idPerfil}/media_publish?creation_id=${respostaMetaConteiner.id}&access_token=${chave[0].token}`, {
-                        method: 'POST'
-                        });
-
-
-                        const resultado = await publishResponse.json();
-                        this.logger.debug('Resultado da publicação', resultado);
-
-                        //const update = await connection('calendario')
-                        //  .where('id', publicao[cont].id)
-                            //.update('publicado', 'publicado');
-                        //this.logger.debug(update);
-                    }*/
