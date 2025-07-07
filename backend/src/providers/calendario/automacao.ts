@@ -33,7 +33,7 @@ export class Automacao {
             this.logger.debug('aqui é null', horaUser)
             // se for null efetuar a puyblicação com o horario definido por padrão na criação do calendario.
             // verificar se ahora do processamento é a mesma da publicação.
-            if(hora === 22 /*parseInt(publicao[cont].hora)*/){
+            if(hora === 19 /*parseInt(publicao[cont].hora)*/){
                 this.logger.debug(hora)
                 // verificar o formato da publicação
                 if(publicao[cont].formato === 'carrossel'){
