@@ -33,7 +33,7 @@ export class Automacao {
             this.logger.debug('aqui é null', horaUser)
             // se for null efetuar a puyblicação com o horario definido por padrão na criação do calendario.
             // verificar se ahora do processamento é a mesma da publicação.
-            if(hora === 21 /*parseInt(publicao[cont].hora)*/){
+            if(hora === 22 /*parseInt(publicao[cont].hora)*/){
                 this.logger.debug(hora)
                 // verificar o formato da publicação
                 if(publicao[cont].formato === 'carrossel'){
@@ -86,16 +86,13 @@ export class Automacao {
                         `src/public/${publicao[cont].nomeArquivos}`,
                         `src/public/processed-${publicao[cont].nomeArquivos}`
                     );
+                    ///cirando container
 
-
-
-                    /**
-                     * 
                     const createRes = await axios.post(
-                    `https://graph.facebook.com/v20.0/${horaUser[0].idPerfil}/media`,
+                    `https://graph.facebook.com/v23.0/${horaUser[0].idPerfil}/media`,
                     new URLSearchParams({
                         media_type: 'REELS',
-                        video_url: `https://cristatusbackapp-production.up.railway.app/image/${publicao[cont].nomeArquivos}`,
+                        video_url: `https://cristatusbackapp-production.up.railway.app/image/processed-${publicao[cont].nomeArquivos}`,
                         caption: publicao[cont].legenda,
                         access_token: chave[0].token,
                     }),
@@ -114,15 +111,13 @@ export class Automacao {
 
                     // 3. Publicar o vídeo (Reel)
                     const publishRes = await axios.post(
-                    `https://graph.facebook.com/v20.0/${horaUser[0].idPerfil}/media_publish`,
+                    `https://graph.facebook.com/v23.0/${horaUser[0].idPerfil}/media_publish`,
                     new URLSearchParams({
                         creation_id: containerId,
                         access_token: chave[0].token,
                     }),
                     );
                     this.logger.debug(publishRes);
-                    
-                     */
 
                 }
             } else {
