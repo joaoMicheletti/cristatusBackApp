@@ -115,7 +115,7 @@ export class CalendarioEditorial {
             .where('dia', Dia)
             .where('mes', Mes)
             .where('ano', fim[0])
-            .where('art', null) // buscar onde a art seja ok 
+            //.where('art', null) // buscar onde a art seja ok 
             .select('*');
             console.log(resp)
             res = resp;
@@ -131,7 +131,7 @@ export class CalendarioEditorial {
             .where('dia', Dia)
             .where('mes', Mes)
             .where('ano', inicio[0])
-            .where('art',  null) // buscar onde a art seja ok 
+            //.where('art',  null) // buscar onde a art seja ok 
             .select('*')
             console.log(resp)
             res = resp
@@ -149,7 +149,7 @@ export class CalendarioEditorial {
             const resp = await connection('calendario')
                 .where('tokenUser', data.tokenUser)
                 .where('aprovadoCrister', null)
-                .where('art', null) // buscar onde a art seja ok 
+                //.where('art', null) // buscar onde a art seja ok 
                 .andWhereRaw(
                 // strftime format: garante '2025-05-09' mesmo que mes/dia sejam inteiros
                 `strftime('%Y-%m-%d',
@@ -420,6 +420,11 @@ export class CalendarioEditorial {
         //.select('*')
         return{res}
     }
+    // legenda Unica
+    async Legenda(data: CalendarioDTO): Promise<object>{
+        await connection('calendario').where('id', data.id).update('legenda', data.legenda);
+        return{res :'salva'}
+    };
     // funcionalidade para aprovar a publicação - Cliente + automação da publicação.
     async aprovacaoCliente(data: CalendarioDTO): Promise<any> {
         // 1) Atualiza o registro

@@ -51,5 +51,10 @@ export class RegisterUserController {
   async updateHora(@Body() data: RegisterUserClietDTO): Promise<object> {
     return await this.registerUser.updateHora(data);
   }
+  //update Foto
+  @Post('updateoFto')
+  async updateFoto(@Body() data: RegisterUserClietDTO): Promise<object> {
+    return await this.registerUser.updateFoto(data);
+  }
 }
 

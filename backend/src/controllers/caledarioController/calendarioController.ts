@@ -78,8 +78,14 @@ export class Calendario {
     }
     // atulixando a legenda dapublicação
     @Post('updateLegenda')
-    async updateLegenda(@Body() daa: CalendarioDTO): Promise<object> {
-        return await this.CalendarioEditorial.updateLegenda(daa);
+    async updateLegenda(@Body() data: CalendarioDTO): Promise<object> {
+        return await this.CalendarioEditorial.updateLegenda(data);
+    };
+    // legenda Unica: 
+    @Post('legendaUnica')
+    async Legenda(@Body() data: CalendarioDTO): Promise<object>{
+        console.log('ta rolando aqui', data)
+        return await this.CalendarioEditorial.Legenda(data)
     };
     // rota para aprovação da publicação - Clinte.
     @Post('aprovacaoCliente')

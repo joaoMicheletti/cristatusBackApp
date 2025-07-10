@@ -8,7 +8,7 @@ const ffmpegPath = require('ffmpeg-static');
 @Injectable()
 export class Automacao {
   private readonly logger = new Logger(Automacao.name);
-  @Cron('20 * * * * *')  async handleCron() {
+  @Cron('10 * * * * *')  async handleCron() {
     this.logger.debug('Called when the current second is 45');
     const data = new Date();
     const dia = data.getDate();// dia

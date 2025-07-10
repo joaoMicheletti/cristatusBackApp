@@ -10,4 +10,6 @@ export class RegisterUserClietDTO {
     idPerfil: string;
     diaVencimento: string;
     horario: string;
+    foto:string;
+    id: string;
 }

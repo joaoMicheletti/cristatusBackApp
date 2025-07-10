@@ -106,4 +106,13 @@ export class RegisterUserServide {
             return {res: 'Erro ao atualizar o Horário1'};
         }
     };
+    //update Foto {}
+    async updateFoto(data: RegisterUserClietDTO): Promise<object> {
+        console.log('data', data)
+        let sep = data.foto.split('.');
+        console.log(sep)
+        let T = await connection('cliente').where('id', data.id).update('foto', data.foto)
+        console.log("TESTANDO:", T)
+        return{res: T}
+    }
 };
