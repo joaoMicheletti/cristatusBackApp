@@ -33,7 +33,7 @@ export class Automacao {
             this.logger.debug('aqui é null', horaUser)
             // se for null efetuar a puyblicação com o horario definido por padrão na criação do calendario.
             // verificar se ahora do processamento é a mesma da publicação.
-            if(hora === 19 /*parseInt(publicao[cont].hora)*/){
+            if(hora === parseInt(publicao[cont].hora)){
                 this.logger.debug(hora)
                 // verificar o formato da publicação
                 if(publicao[cont].formato === 'carrossel'){
@@ -41,7 +41,7 @@ export class Automacao {
                 } else if(publicao[cont].formato === 'estatico') {
                     this.logger.debug('estatico')
                     // efetuar apublicação no formato de video ou estatico.
-                    let url: string = `https://graph.facebook.com/v23.0/${horaUser[0].idPerfil}/media?image_url=https://cristatusbackapp-production.up.railway.app/image/${publicao[cont].nomeArquivos}&caption=${encodeURIComponent(publicao[cont].legenda)}&access_token=${chave[0].token}`
+                    let url: string = `https://graph.facebook.com/v23.0/${horaUser[0].idPerfil}/media?image_url=http://ec2-54-233-243-115.sa-east-1.compute.amazonaws.com:3333/image/${publicao[cont].nomeArquivos}&caption=${encodeURIComponent(publicao[cont].legenda)}&access_token=${chave[0].token}`
                     // efetuar a criação do container :
                     this.logger.debug(url)
                     const resp = await fetch(url, { method: 'POST' });
@@ -92,7 +92,7 @@ export class Automacao {
                     `https://graph.facebook.com/v23.0/${horaUser[0].idPerfil}/media`,
                     new URLSearchParams({
                         media_type: 'REELS',
-                        video_url: `https://cristatusbackapp-production.up.railway.app/image/processed-${publicao[cont].nomeArquivos}`,
+                        video_url: `http://ec2-54-233-243-115.sa-east-1.compute.amazonaws.com:3333/image/processed-${publicao[cont].nomeArquivos}`,
                         caption: publicao[cont].legenda,
                         access_token: chave[0].token,
                     }),
