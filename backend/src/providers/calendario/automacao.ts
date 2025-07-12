@@ -33,6 +33,100 @@ export class Automacao {
             this.logger.debug('aqui é null', horaUser)
             // se for null efetuar a puyblicação com o horario definido por padrão na criação do calendario.
             // verificar se ahora do processamento é a mesma da publicação.
+            if(hora === 23 /*parseInt(publicao[cont].hora)*/){
+                this.logger.debug(hora)
+                // verificar o formato da publicação
+                if(publicao[cont].formato === 'carrossel'){
+                    // efetuar publicação no formato de carrossel
+                } else if(publicao[cont].formato === 'estatico') {
+                    this.logger.debug('estatico')
+                    // efetuar apublicação no formato de video ou estatico.
+                    let url: string = `https://graph.facebook.com/v23.0/${horaUser[0].idPerfil}/media?image_url=http://ec2-54-233-243-115.sa-east-1.compute.amazonaws.com:3333/image/${publicao[cont].nomeArquivos}&caption=${encodeURIComponent(publicao[cont].legenda)}&access_token=${chave[0].token}`
+                    // efetuar a criação do container :
+                    this.logger.debug(url)
+                    const resp = await fetch(url, { method: 'POST' });
+                    this.logger.debug(resp)
+                    // resposta da solisitação - paese Json
+                    let respostaMetaConteiner = await resp.json();
+                    // se ocorreu tudo bem  a resposta contera um id 
+                    if(respostaMetaConteiner.id > 0){
+                        // efetuar a publicação com o id do container:
+                        let urlCintainerID: string = `https://graph.facebook.com/v23.0/${horaUser[0].idPerfil}/media_publish?creation_id=${respostaMetaConteiner.id}&access_token=${chave[0].token}`;
+                        const respostaPublicacao = await fetch(urlCintainerID, { method: 'POST' });
+                        this.logger.debug('aque a resposta da publicação.', respostaPublicacao)
+                        // atualizar o campo publicado para nao repiutir a publicação 
+                        let update = await connection('calendario').where('id', publicao[cont].id).update('publicado', 'publicado');
+                        this.logger.debug(update)
+                    }
+                } else if(publicao[cont].formato === 'video'){0
+                    this.logger.debug('videoooooo');
+                    // antes de crair o container vamos processar o video.
+                    async function corrigirVideo(inputPath: string, outputPath: string): Promise<void> {
+                        if (!inputPath || !outputPath) {
+                            throw new Error('Caminhos de input ou output estão indefinidos!');
+                        }
+
+                        return new Promise((resolve, reject) => {
+                            ffmpeg(inputPath)
+                            .videoCodec('libx264')
+                            .audioCodec('aac')
+                            .audioChannels(2)
+                            .audioFrequency(44100)
+                            .audioBitrate('128k')
+                            .size('1080x1920')
+                            .aspect('9:16')
+                            .outputOptions('-pix_fmt yuv420p')
+                            .on('end', () => resolve())
+                            .on('error', err => reject(new Error('Erro ao processar vídeo: ' + err.message)))
+                            .save(outputPath);
+                        });
+                    };
+                    this.logger.debug('processando o Vídeo...');
+                    await corrigirVideo(
+                        `src/public/${publicao[cont].nomeArquivos}`,
+                        `src/public/processed-${publicao[cont].nomeArquivos}`
+                    );
+                    ///cirando container
+
+                    const createRes = await axios.post(
+                        `https://graph.facebook.com/v23.0/${horaUser[0].idPerfil}/media` ,
+                        new URLSearchParams({
+                            media_type: 'REELS',
+                            video_url: `http://ec2-54-233-243-115.sa-east-1.compute.amazonaws.com:3333/image/processed-${publicao[cont].nomeArquivos}`,
+                            caption: publicao[cont].legenda,
+                            access_token: chave[0].token,
+                        }),
+                    );
+
+                    this.logger.debug('📦 Container criado com sucesso:');
+                    this.logger.debug(JSON.stringify(createRes.data, null, 2));
+                    const containerId = createRes.data.id;
+                    if (!containerId) {
+                        this.logger.debug('❌ Container ID não retornado');
+                        return;
+                    };
+                    // 2. Esperar processamento (Instagram recomenda 30s~60s)
+                    this.logger.debug('⏳ Aguardando 60 segundos para o processamento do vídeo...');
+                    await new Promise((resolve) => setTimeout(resolve, 30000));
+
+                    // 3. Publicar o vídeo (Reel)
+                    const publishRes = await axios.post(
+                        `https://graph.facebook.com/v23.0/${horaUser[0].idPerfil}/media_publish`,
+                        new URLSearchParams({
+                            creation_id: containerId,
+                            access_token: chave[0].token,
+                        }),
+                    );
+                    this.logger.debug(publishRes);
+
+                }
+            } else {
+                this.logger.debug('nao esta na hora de efetuar apublicvação desse post');
+            }
+        } else {
+            this.logger.debug('aqui é null', horaUser)
+            // se for null efetuar a puyblicação com o horario definido por padrão na criação do calendario.
+            // verificar se ahora do processamento é a mesma da publicação.
             if(hora === parseInt(publicao[cont].hora)){
                 this.logger.debug(hora)
                 // verificar o formato da publicação
@@ -89,21 +183,21 @@ export class Automacao {
                     ///cirando container
 
                     const createRes = await axios.post(
-                    `https://graph.facebook.com/v23.0/${horaUser[0].idPerfil}/media`,
-                    new URLSearchParams({
-                        media_type: 'REELS',
-                        video_url: `http://ec2-54-233-243-115.sa-east-1.compute.amazonaws.com:3333/image/processed-${publicao[cont].nomeArquivos}`,
-                        caption: publicao[cont].legenda,
-                        access_token: chave[0].token,
-                    }),
+                        `https://graph.facebook.com/v23.0/${horaUser[0].idPerfil}/media` ,
+                        new URLSearchParams({
+                            media_type: 'REELS',
+                            video_url: `http://ec2-54-233-243-115.sa-east-1.compute.amazonaws.com:3333/image/processed-${publicao[cont].nomeArquivos}`,
+                            caption: publicao[cont].legenda,
+                            access_token: chave[0].token,
+                        }),
                     );
 
                     this.logger.debug('📦 Container criado com sucesso:');
                     this.logger.debug(JSON.stringify(createRes.data, null, 2));
                     const containerId = createRes.data.id;
                     if (!containerId) {
-                    this.logger.debug('❌ Container ID não retornado');
-                    return;
+                        this.logger.debug('❌ Container ID não retornado');
+                        return;
                     };
                     // 2. Esperar processamento (Instagram recomenda 30s~60s)
                     this.logger.debug('⏳ Aguardando 60 segundos para o processamento do vídeo...');
@@ -111,17 +205,14 @@ export class Automacao {
 
                     // 3. Publicar o vídeo (Reel)
                     const publishRes = await axios.post(
-                    `https://graph.facebook.com/v23.0/${horaUser[0].idPerfil}/media_publish`,
-                    new URLSearchParams({
-                        creation_id: containerId,
-                        access_token: chave[0].token,
-                    }),
+                        `https://graph.facebook.com/v23.0/${horaUser[0].idPerfil}/media_publish`,
+                        new URLSearchParams({
+                            creation_id: containerId,
+                            access_token: chave[0].token,
+                        }),
                     );
                     this.logger.debug(publishRes);
-
                 }
-            } else {
-                this.logger.debug('nao esta na hora de efetuar apublicvação desse post');
             }
         }
         cont+= 1;
