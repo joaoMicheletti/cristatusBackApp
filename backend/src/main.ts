@@ -46,8 +46,8 @@ app.use('/image', (req, res, next) => {
 
   express.static(publicDir)(req, res, next);
 });
-  await app.listen(443);
-  console.log(`Aplicação rodando em: http://localhost:443`);
+  await app.listen(3333);
+  console.log(`Aplicação rodando em: http://localhost:3333`);
 }
 
 bootstrap();
