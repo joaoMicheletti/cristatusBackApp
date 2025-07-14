@@ -39,7 +39,7 @@ export class Notifications {
         }
         
         //verificar se já temos o registro no banco:
-        if(response.length < 0){
+        if(response.length > 0){
             // se > temos a assiunatura registrada no banco de dados.
             return {T: 'ja cadastrado'}
         } else {
