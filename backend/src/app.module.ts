@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { ScheduleModule } from '@nestjs/schedule';
 import { ConfigModule } from '@nestjs/config';
 import {Automacao} from './providers/calendario/automacao';
+import { Notificacao } from './providers/calendario/notificacaoLembreteCliente';
 // login User Cliente
 import { LoginUserController } from './controllers/loginUserClient/luginUserController';
 import { LogunUserServices } from './providers/loginUserClient/loginUserservices';
@@ -46,6 +47,7 @@ import { CallBackController } from './controllers/callbakFacebbok';
   ],
   providers: [
     Automacao, 
+    Notificacao,
     colaboradorProvider, 
     LogunUserServices, 
     RegisterUserServide, 

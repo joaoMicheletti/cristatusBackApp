@@ -1,9 +1,9 @@
 import { Body, Controller, Get, Post, Query, Res } from "@nestjs/common";
 import { CalendarioEditorial } from '../../providers/calendario/calendariService';
 import {CalendarioDTO} from './calendarioDTo' 
-import axios from "axios";
+import connection from "src/database/connection";
 
-@Controller()
+@Controller() 
 
 export class Calendario {
     constructor(private readonly CalendarioEditorial: CalendarioEditorial) {};
@@ -96,5 +96,14 @@ export class Calendario {
     @Post('createToken')
     async createToken(@Body() data: CalendarioDTO): Promise<object>{
         return await this.CalendarioEditorial.createToken(data);
+    };
+    // buscar Arquivo Morto
+    @Post('arquivoMorto')
+    async arquivoMorto(@Body() data: CalendarioDTO): Promise<object> {
+        console.log(data);
+        let res = await connection('calendario').where('tokenUser', data.tokenUser).where('aprovadoCliente', 'aprovado').select("*")
+        console.log(res)
+        return{res}
+        
     }
 }

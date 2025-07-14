@@ -55,6 +55,12 @@ export class RegisterUserController {
   @Post('updateoFto')
   async updateFoto(@Body() data: RegisterUserClietDTO): Promise<object> {
     return await this.registerUser.updateFoto(data);
+  };
+  @Post('updateIdInsta')
+  async updateIdInsta(@Body() data: RegisterUserClietDTO): Promise<object> {
+    console.log(data);
+    return await this.registerUser.updateIdPerfilInsta(data);
+    
   }
 }
 

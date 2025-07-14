@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Body, Injectable } from '@nestjs/common';
 import { RegisterUserClietDTO } from 'src/controllers/registerUserClient/registerUserDTO';
 import connection from 'src/database/connection';
 
@@ -100,11 +100,8 @@ export class RegisterUserServide {
     async updateHora(data: RegisterUserClietDTO): Promise<object> {
         let res = await connection('cliente').where('token', data.token)
         .update('horario', data.horario);
-        if(res.length > 0) {
-            return{res: 'Horário atualizado com sucesso.'};
-        } else {
-            return {res: 'Erro ao atualizar o Horário1'};
-        }
+        console.log('hora', res)
+        return {res}
     };
     //update Foto {}
     async updateFoto(data: RegisterUserClietDTO): Promise<object> {
@@ -114,5 +111,13 @@ export class RegisterUserServide {
         let T = await connection('cliente').where('id', data.id).update('foto', data.foto)
         console.log("TESTANDO:", T)
         return{res: T}
+    };
+    // atualizar id de perfil.
+    async  updateIdPerfilInsta(data: RegisterUserClietDTO): Promise<object> {
+        console.log(data)
+        let res = await connection('cliente').where('token', data.token).update('idInsta', data.idInsta);
+        console.log(res)
+        return{res}
+        
     }
 };

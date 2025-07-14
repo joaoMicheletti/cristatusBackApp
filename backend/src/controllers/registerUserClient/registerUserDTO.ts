@@ -12,4 +12,5 @@ export class RegisterUserClietDTO {
     horario: string;
     foto:string;
     id: string;
+    idInsta: string;
 }

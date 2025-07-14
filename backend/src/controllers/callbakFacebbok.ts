@@ -65,11 +65,12 @@ export class CallBackController {
         // Caso o usuário já esteja cadastrado
         return res.send(`
           <html>
+            
             <body style="font-family: sans-serif; text-align: center; padding: 2rem;">
+              <script>sessionStorage.setItem("token", ${userId});</script>
               <h2>Usuário Já cadastrado!</h2>
               <p>Você já pode fechar esta aba.</p>
-              <a href="http://localhost:3000/dashboardCliente">Acessar seu DashBoard</a>
-              <script>sessionStorage.setItem("token", ${userId});</script>
+              <a href="http://localhost:3000/dashboardCliente">Acessar seu DashBoard</a>  
             </body>
           </html>
         `);

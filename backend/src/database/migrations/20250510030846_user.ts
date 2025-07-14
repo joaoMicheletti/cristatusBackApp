@@ -14,6 +14,7 @@ export async function up(knex: Knex): Promise<void> {
         table.string('horario');
         table.string('empresa');
         table.string('foto');
+        table.string('idInsta');
     });
 }
 

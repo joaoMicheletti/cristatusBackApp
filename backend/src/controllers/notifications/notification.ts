@@ -6,7 +6,7 @@ console.log(webpush.generateVAPIDKeys())
 const publicKey = 'BLX2aIItjzqywDuszr0Gx9b6-WdwxIlwUWx2VO_daQGA6ccrsbdowUopB2KpFE9WmYJm1wybW-7uuClCL1d__H8';
 const privateKey = 'gYlYb7-x14nlg5gaPS40n_ZdhnNzF_xHjBi7TUyzWzc';
 
-webpush.setVapidDetails('https://localhost:3000', publicKey, privateKey)
+webpush.setVapidDetails('https://flowly.app.br/', publicKey, privateKey)
 
 @Controller()
 export class Notifications {
@@ -19,7 +19,7 @@ export class Notifications {
         };
     };
     // registro de notificações de cada usuário
-    @Post('notificationsREgister')
+    @Post('notificationsRegister')
     async RegisterNotification(@Body() data: any): Promise<object>{
         const { token, tokenCrister, subscription, typeUser } = data;
         const { endpoint, expirationTime, keys } = subscription;
@@ -39,7 +39,7 @@ export class Notifications {
         }
         
         //verificar se já temos o registro no banco:
-        if(response.length > 0){
+        if(response.length < 0){
             // se > temos a assiunatura registrada no banco de dados.
             return {T: 'ja cadastrado'}
         } else {

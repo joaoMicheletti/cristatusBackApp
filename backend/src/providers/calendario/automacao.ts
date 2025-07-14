@@ -4,11 +4,10 @@ import { console } from 'inspector';
 import connection from 'src/database/connection';
 import axios from 'axios';
 const ffmpeg = require('fluent-ffmpeg');
-const ffmpegPath = require('ffmpeg-static');
 @Injectable()
 export class Automacao {
   private readonly logger = new Logger(Automacao.name);
-  @Cron('10 * * * * *')  async handleCron() {
+  @Cron('25 * * * * *')  async handleCron() {
     this.logger.debug('Called when the current second is 45');
     const data = new Date();
     const dia = data.getDate();// dia
@@ -20,20 +19,22 @@ export class Automacao {
     .where('aprovadoCliente', 'aprovado')
     .where('publicado', null)// buscar publicações  com base na  data de hoje e hora atual.
     const chave = await connection('automacao').select('token')
-    this.logger.debug(hora === 0);
 
     // fazer um loop para cada publicação encontrada. 
     let cont = 0;
     while (cont < publicao.length){
-        console.log('aqui', publicao[cont].tokenUser);
+        this.logger.debug("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA")
+        this.logger.debug('aqui', publicao[cont].tokenUser);
         // se a hora da publicação for null na tabela do Cliente efetuar a publicação às 09:00
         let horaUser = await connection('cliente').where('token', publicao[cont].tokenUser);// horario estrategico do cliente.
         // verificar se o horario d na table acilente é Null, se for null publicar na hora alternitica.
+        this.logger.debug(horaUser)
+        this.logger.debug(horaUser[0].horario)
         if(horaUser[0].horario === null){
             this.logger.debug('aqui é null', horaUser)
             // se for null efetuar a puyblicação com o horario definido por padrão na criação do calendario.
             // verificar se ahora do processamento é a mesma da publicação.
-            if(hora === 23 /*parseInt(publicao[cont].hora)*/){
+            if(hora === parseInt(publicao[cont].hora)){
                 this.logger.debug(hora)
                 // verificar o formato da publicação
                 if(publicao[cont].formato === 'carrossel'){
@@ -41,7 +42,7 @@ export class Automacao {
                 } else if(publicao[cont].formato === 'estatico') {
                     this.logger.debug('estatico')
                     // efetuar apublicação no formato de video ou estatico.
-                    let url: string = `https://graph.facebook.com/v23.0/${horaUser[0].idPerfil}/media?image_url=http://ec2-54-233-243-115.sa-east-1.compute.amazonaws.com:3333/image/${publicao[cont].nomeArquivos}&caption=${encodeURIComponent(publicao[cont].legenda)}&access_token=${chave[0].token}`
+                    let url: string = `https://graph.facebook.com/v23.0/${horaUser[0].idPerfil}/media?image_url=https://urchin-upright-hardly.ngrok-free.app/image/${publicao[cont].nomeArquivos}&caption=${encodeURIComponent(publicao[cont].legenda)}&access_token=${chave[0].token}`
                     // efetuar a criação do container :
                     this.logger.debug(url)
                     const resp = await fetch(url, { method: 'POST' });
@@ -92,7 +93,7 @@ export class Automacao {
                         `https://graph.facebook.com/v23.0/${horaUser[0].idPerfil}/media` ,
                         new URLSearchParams({
                             media_type: 'REELS',
-                            video_url: `http://ec2-54-233-243-115.sa-east-1.compute.amazonaws.com:3333/image/processed-${publicao[cont].nomeArquivos}`,
+                            video_url: `https://urchin-upright-hardly.ngrok-free.app/image/processed-${publicao[cont].nomeArquivos}`,
                             caption: publicao[cont].legenda,
                             access_token: chave[0].token,
                         }),
@@ -124,18 +125,21 @@ export class Automacao {
                 this.logger.debug('nao esta na hora de efetuar apublicvação desse post');
             }
         } else {
-            this.logger.debug('aqui é null', horaUser)
+            this.logger.debug('aqui não é null', horaUser)
             // se for null efetuar a puyblicação com o horario definido por padrão na criação do calendario.
             // verificar se ahora do processamento é a mesma da publicação.
-            if(hora === parseInt(publicao[cont].hora)){
+            this.logger.debug(hora)
+            this.logger.debug(publicao[cont].hora)
+            if(hora === parseInt(horaUser[0].horario)){
                 this.logger.debug(hora)
                 // verificar o formato da publicação
                 if(publicao[cont].formato === 'carrossel'){
                     // efetuar publicação no formato de carrossel
                 } else if(publicao[cont].formato === 'estatico') {
-                    this.logger.debug('estatico')
+                    this.logger.debug('estaticoooo')
+                    this.logger.debug(horaUser[0]);
                     // efetuar apublicação no formato de video ou estatico.
-                    let url: string = `https://graph.facebook.com/v23.0/${horaUser[0].idPerfil}/media?image_url=http://ec2-54-233-243-115.sa-east-1.compute.amazonaws.com:3333/image/${publicao[cont].nomeArquivos}&caption=${encodeURIComponent(publicao[cont].legenda)}&access_token=${chave[0].token}`
+                    let url: string = `https://graph.facebook.com/v23.0/${horaUser[0].idInsta}/media?image_url=https://urchin-upright-hardly.ngrok-free.app/image/${publicao[cont].nomeArquivos}&caption=${encodeURIComponent(publicao[cont].legenda)}&access_token=${chave[0].token}`
                     // efetuar a criação do container :
                     this.logger.debug(url)
                     const resp = await fetch(url, { method: 'POST' });
