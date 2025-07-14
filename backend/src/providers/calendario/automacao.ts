@@ -7,8 +7,8 @@ const ffmpeg = require('fluent-ffmpeg');
 @Injectable()
 export class Automacao {
   private readonly logger = new Logger(Automacao.name);
-  @Cron('25 * * * * *')  async handleCron() {
-    this.logger.debug('Called when the current second is 45');
+  @Cron('10 * * * * *')  async handleCron() {
+    
     const data = new Date();
     const dia = data.getDate();// dia
     const mes = data.getMonth() + 1;//mes ssomar com +1 para deichar a foramtação correata
@@ -19,8 +19,9 @@ export class Automacao {
     .where('aprovadoCliente', 'aprovado')
     .where('publicado', null)// buscar publicações  com base na  data de hoje e hora atual.
     const chave = await connection('automacao').select('token')
-
+    this.logger.debug('Called when the current second is 45');
     // fazer um loop para cada publicação encontrada. 
+    this.logger.debug(publicao)
     let cont = 0;
     while (cont < publicao.length){
         this.logger.debug("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA")
@@ -42,7 +43,7 @@ export class Automacao {
                 } else if(publicao[cont].formato === 'estatico') {
                     this.logger.debug('estatico')
                     // efetuar apublicação no formato de video ou estatico.
-                    let url: string = `https://graph.facebook.com/v23.0/${horaUser[0].idPerfil}/media?image_url=https://urchin-upright-hardly.ngrok-free.app/image/${publicao[cont].nomeArquivos}&caption=${encodeURIComponent(publicao[cont].legenda)}&access_token=${chave[0].token}`
+                    let url: string = `https://graph.facebook.com/v23.0/${horaUser[0].idInsta}/media?image_url=https://urchin-upright-hardly.ngrok-free.app/image/${publicao[cont].nomeArquivos}&caption=${encodeURIComponent(publicao[cont].legenda)}&access_token=${chave[0].token}`
                     // efetuar a criação do container :
                     this.logger.debug(url)
                     const resp = await fetch(url, { method: 'POST' });
@@ -130,8 +131,9 @@ export class Automacao {
             // verificar se ahora do processamento é a mesma da publicação.
             this.logger.debug(hora)
             this.logger.debug(publicao[cont].hora)
+            this.logger.debug(hora === parseInt(horaUser[0].horario))
             if(hora === parseInt(horaUser[0].horario)){
-                this.logger.debug(hora)
+                this.logger.debug('criar container')
                 // verificar o formato da publicação
                 if(publicao[cont].formato === 'carrossel'){
                     // efetuar publicação no formato de carrossel
@@ -143,13 +145,13 @@ export class Automacao {
                     // efetuar a criação do container :
                     this.logger.debug(url)
                     const resp = await fetch(url, { method: 'POST' });
-                    this.logger.debug(resp)
                     // resposta da solisitação - paese Json
                     let respostaMetaConteiner = await resp.json();
                     // se ocorreu tudo bem  a resposta contera um id 
+                    this.logger.debug(respostaMetaConteiner.id)
                     if(respostaMetaConteiner.id > 0){
                         // efetuar a publicação com o id do container:
-                        let urlCintainerID: string = `https://graph.facebook.com/v23.0/${horaUser[0].idPerfil}/media_publish?creation_id=${respostaMetaConteiner.id}&access_token=${chave[0].token}`;
+                        let urlCintainerID: string = `https://graph.facebook.com/v23.0/${horaUser[0].idInsta}/media_publish?creation_id=${respostaMetaConteiner.id}&access_token=${chave[0].token}`;
                         const respostaPublicacao = await fetch(urlCintainerID, { method: 'POST' });
                         this.logger.debug('aque a resposta da publicação.', respostaPublicacao)
                         // atualizar o campo publicado para nao repiutir a publicação 
