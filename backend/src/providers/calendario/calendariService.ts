@@ -266,7 +266,7 @@ export class CalendarioEditorial {
                     }
 
                 };
-                WebPush.sendNotification(subscription, `O Conteudo do dia ${data.dia}/${data.mes}/${data.ano} do Clinete (${Cliente[0].user})- aguarda por aprovação!.`)
+                WebPush.sendNotification(subscription, `O Conteudo do dia ${data.dia}/${data.mes}/${data.ano} do Cliente (${Cliente[0].user})- aguarda por aprovação!.`)
                 console.log(' corpo da notificação',subscription)
             }
         }
