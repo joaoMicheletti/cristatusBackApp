@@ -9,74 +9,105 @@ export class CallBackController {
   async instagramCallback(@Query('code') code: string, @Query('state') cnpj: string, @Res() res: any) {
     try {
       // 1. Obter o token de acesso de curto prazo
-      const { data } = await axios.get(
-        'https://graph.facebook.com/v23.0/oauth/access_token',
-        {
-          params: {
-            client_id: '3117860508390563',
-            client_secret: 'f6c1b6967c21415b7db5382bc90fe46d',
-            redirect_uri: 'http://localhost:3333/callback',
-            code,
-          },
+      const { data } = await axios.get('https://graph.facebook.com/v23.0/oauth/access_token', {
+        params: {
+          client_id: '3117860508390563',
+          client_secret: 'f6c1b6967c21415b7db5382bc90fe46d',
+          redirect_uri: 'http://localhost:3333/callback',
+          code,
         },
-      );
+      });
 
       // 2. Obter o token de longo prazo
-      const longLivedTokenResp = await axios.get(
-        `https://graph.facebook.com/v23.0/oauth/access_token`,
-        {
-          params: {
-            grant_type: 'fb_exchange_token',
-            client_id: '3117860508390563',
-            client_secret: 'f6c1b6967c21415b7db5382bc90fe46d',
-            fb_exchange_token: data.access_token,
-          },
+      const longLivedTokenResp = await axios.get('https://graph.facebook.com/v23.0/oauth/access_token', {
+        params: {
+          grant_type: 'fb_exchange_token',
+          client_id: '3117860508390563',
+          client_secret: 'f6c1b6967c21415b7db5382bc90fe46d',
+          fb_exchange_token: data.access_token,
         },
-      );
+      });
 
       const longToken = longLivedTokenResp.data.access_token;
 
-      // 3. Obter informações do usuário (nome, ID, e-mail, etc.)
-      const userInfo = await axios.get(
-        `https://graph.facebook.com/v23.0/me`,
-        { params: { access_token: longToken, fields: 'id,name,email' } },
-      );
+      // 3. Obter informações do usuário do Facebook
+      const userInfo = await axios.get('https://graph.facebook.com/v23.0/me', {
+        params: { access_token: longToken, fields: 'id,name,email' },
+      });
 
-      const userName = userInfo.data.name; // Nome do usuário
-      const userId = userInfo.data.id; // ID do usuário no Facebook
-      const userEmail = userInfo.data.email; // E-mail (se disponível)
+      const userName = userInfo.data.name;
+      const userId = userInfo.data.id;
+      const userEmail = userInfo.data.email;
 
-      // 4. Associar o CNPJ da empresa recebido via parâmetro 'state'
-      const empresaCNPJ = cnpj; // O CNPJ foi passado na URL via 'state'
+      const empresaCNPJ = cnpj;
 
-      // 5. Verificar se o usuário já está cadastrado
+      // 4. Buscar Instagram vinculado às páginas do usuário
+      const pagesResponse = await axios.get('https://graph.facebook.com/v23.0/me/accounts', {
+        params: { access_token: longToken },
+      });
+
+      let instagramId = null;
+      let instagramProfilePic = null;
+
+      for (const page of pagesResponse.data.data) {
+        const pageId = page.id;
+
+        // Buscar conta de Instagram vinculada à página
+        const pageDetails = await axios.get(`https://graph.facebook.com/v23.0/${pageId}`, {
+          params: {
+            fields: 'connected_instagram_account',
+            access_token: longToken,
+          },
+        });
+
+        const connectedInsta = pageDetails.data.connected_instagram_account;
+
+        if (connectedInsta && connectedInsta.id) {
+          instagramId = connectedInsta.id;
+
+          // Obter foto de perfil da conta do Instagram
+          const instaProfile = await axios.get(`https://graph.facebook.com/v23.0/${instagramId}`, {
+            params: {
+              fields: 'username,profile_picture_url',
+              access_token: longToken,
+            },
+          });
+
+          instagramProfilePic = instaProfile.data.profile_picture_url;
+          break;
+        }
+      }
+
+      // 5. Montar dados para inserção no banco
       let Data = {
-        user: userName, // Armazena o nome do usuário
-        pass: 3333,   // Usamos o ID do Facebook como senha (ou pode ser outro campo)
+        user: userName,
+        pass: 3333,
         token: longToken,
         idPerfil: userId,
         horario: 9,
-        empresa: empresaCNPJ, // Associamos o CNPJ da empresa
+        idInsta: instagramId,
+        foto: instagramProfilePic,
+        empresa: empresaCNPJ,
       };
-      console.log(Data)
 
-      let verification = await connection('cliente').where('idperfil', userId);
+      console.log('Dados para inserção:', Data);
+
+      const verification = await connection('cliente').where('idperfil', userId);
       if (verification.length > 0) {
-        // Caso o usuário já esteja cadastrado
+        // Usuário já cadastrado
         return res.send(`
           <html>
-            
             <body style="font-family: sans-serif; text-align: center; padding: 2rem;">
               <script>sessionStorage.setItem("token", ${userId});</script>
-              <h2>Usuário Já cadastrado!</h2>
+              <h2>Usuário já cadastrado!</h2>
               <p>Você já pode fechar esta aba.</p>
               <a href="http://localhost:3000/dashboardCliente">Acessar seu DashBoard</a>  
             </body>
           </html>
         `);
       } else {
-        // Caso o usuário não esteja cadastrado
-        let T = await connection('cliente').insert(Data);
+        // Inserir novo usuário
+        const T = await connection('cliente').insert(Data);
         console.log('Novo usuário cadastrado:', T);
 
         return res.send(`
@@ -90,8 +121,9 @@ export class CallBackController {
           </html>
         `);
       }
+
     } catch (err) {
-      console.error(err);
+      console.error('Erro ao finalizar login com o Instagram:', err.response?.data || err.message);
       return res.status(500).send('Erro ao finalizar login com o Instagram.');
     }
   }
