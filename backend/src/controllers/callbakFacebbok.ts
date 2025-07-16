@@ -95,31 +95,13 @@ export class CallBackController {
       const verification = await connection('cliente').where('idperfil', userId);
       if (verification.length > 0) {
         // Usuário já cadastrado
-        return res.send(`
-          <html>
-            <body style="font-family: sans-serif; text-align: center; padding: 2rem;">
-              <script>sessionStorage.setItem("token", ${userId});</script>
-              <h2>Usuário já cadastrado!</h2>
-              <p>Você já pode fechar esta aba.</p>
-              <a href="http://localhost:3000/dashboardCliente">Acessar seu DashBoard</a>  
-            </body>
-          </html>
-        `);
+        return res.redirect(`https://flowly.app.br/dashboardCliente?token=${userId}`);
       } else {
         // Inserir novo usuário
         const T = await connection('cliente').insert(Data);
         console.log('Novo usuário cadastrado:', T);
 
-        return res.send(`
-          <html>
-            <body style="font-family: sans-serif; text-align: center; padding: 2rem;">
-              <h2>Login realizado com sucesso!</h2>
-              <p>Você já pode fechar esta aba.</p>
-              <a href="http://localhost:3000/dashboardCliente">DashBoard</a>
-              <script>sessionStorage.setItem("token", ${userId});</script>
-            </body>
-          </html>
-        `);
+        return res.redirect(`https://flowly.app.br/dashboardCliente?token=${userId}`);
       }
 
     } catch (err) {

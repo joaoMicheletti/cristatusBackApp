@@ -18,6 +18,23 @@ export class Notifications {
             publicKey
         };
     };
+    // verificar existejncai de notificação:
+    @Post('notifications/check')
+    async checkSubscription(@Body() body: any) {
+        const { endpoint, keys } = body.subscription;
+
+        const exists = await connection('notifications')
+            .where('endPoint', endpoint)
+            .first();
+
+        if (exists) {
+            // Já temos a assinatura registrada — tudo certo
+            return { status: 'ok', message: 'Assinatura já existente' };
+        }
+
+        // Não encontrada — talvez expirou ou seja nova
+        return { status: 'not_found' };
+    }
     // registro de notificações de cada usuário
     @Post('notificationsRegister')
     async RegisterNotification(@Body() data: any): Promise<object>{
@@ -76,5 +93,10 @@ export class Notifications {
             return {}
         }        
     };
-
+    // teste 
+    @Get('get')
+    async Delete(@Body() data: any): Promise<any>{
+        let t = await connection('notifications').delete('*');
+        return {t};
+    }
 }
