@@ -77,12 +77,8 @@ export class RegisterUserServide {
         let res = await connection('cliente').where('token', data.token)
         .update('pass', data.pass);
         console.log('!!!!!', res)
-        console.log('updateSenha', data);
-        if(res.length > 1){
-            return{res: 'senha atualizada com sucesso!'}
-        } else {
-            return{res: 'erro ao editar senha!'}
-        }
+        console.log('updateSenha', data.pass, res);
+        return {res}
         
     };
     // update data de faturamento:

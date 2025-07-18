@@ -39,7 +39,7 @@ export class CallBackController {
       const userId = userInfo.data.id;
       const userEmail = userInfo.data.email;
 
-      const empresaCNPJ = cnpj;
+      const empresaCNPJ = '38860300835'// cnpj;
 
       // 4. Buscar Instagram vinculado às páginas do usuário
       const pagesResponse = await axios.get('https://graph.facebook.com/v23.0/me/accounts', {
