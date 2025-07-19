@@ -8,7 +8,8 @@ import connection from "src/database/connection";
 export class Calendario {
     constructor(private readonly CalendarioEditorial: CalendarioEditorial) {};
     @Get('/')
-        home() {
+    home() {
+        console.log('200 aqui ')
         return { status: 'ok' };
     }
 
