@@ -13,7 +13,7 @@ export class CallBackController {
         params: {
           client_id: '3117860508390563',
           client_secret: 'f6c1b6967c21415b7db5382bc90fe46d',
-          redirect_uri: 'https://urchin-upright-hardly.ngrok-free.app/callback',
+          redirect_uri: 'https://www.acasaprime1.com.br/callback',
           code,
         },
       });
@@ -95,13 +95,13 @@ export class CallBackController {
       const verification = await connection('cliente').where('idperfil', userId);
       if (verification.length > 0) {
         // Usuário já cadastrado
-        return res.redirect(`https://flowly.app.br/dashboardCliente?token=${userId}`);
+        return res.redirect(`https://acasaprime1.com.br/dashboardCliente?token=${userId}`);
       } else {
         // Inserir novo usuário
         const T = await connection('cliente').insert(Data);
         console.log('Novo usuário cadastrado:', T);
 
-        return res.redirect(`https://flowly.app.br/dashboardCliente?token=${userId}`);
+        return res.redirect(`https://acasaprime1.com.br/dashboardCliente?token=${userId}`);
       }
 
     } catch (err) {
