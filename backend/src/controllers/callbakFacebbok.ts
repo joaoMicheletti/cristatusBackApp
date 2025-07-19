@@ -13,7 +13,7 @@ export class CallBackController {
         params: {
           client_id: '3117860508390563',
           client_secret: 'f6c1b6967c21415b7db5382bc90fe46d',
-          redirect_uri: 'http://localhost:3333/callback',
+          redirect_uri: 'https://urchin-upright-hardly.ngrok-free.app/callback',
           code,
         },
       });
