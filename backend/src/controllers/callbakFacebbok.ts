@@ -95,6 +95,8 @@ export class CallBackController {
       const verification = await connection('cliente').where('idperfil', userId);
       if (verification.length > 0) {
         // Usuário já cadastrado
+        //cadastrar nova url de imagem no database;
+        await connection('cliente').where('idperfil', userId).update('foto', instagramProfilePic);
         return res.redirect(`https://acasaprime1.com.br/dashboardCliente?token=${userId}`);
       } else {
         // Inserir novo usuário
