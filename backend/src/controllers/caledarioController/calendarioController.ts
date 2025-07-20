@@ -53,6 +53,7 @@ export class Calendario {
     // buscar material aprovado - Clinete.
     @Post('buscarClineteAprovado')
     async buscarAprovadoCliente(@Body() data: CalendarioDTO): Promise<object> {
+        console.log('aquiesta acessando', data)
         return this.CalendarioEditorial.buscarAprovadoCliente(data);        
     }
     // solicitação de ajuste - pela gestão:

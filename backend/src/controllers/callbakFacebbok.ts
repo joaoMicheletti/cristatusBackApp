@@ -82,7 +82,7 @@ export class CallBackController {
       let Data = {
         user: userName,
         pass: 3333,
-        token: longToken,
+        token: instagramId,
         idPerfil: userId,
         horario: 9,
         idInsta: instagramId,
@@ -97,13 +97,13 @@ export class CallBackController {
         // Usuário já cadastrado
         //cadastrar nova url de imagem no database;
         await connection('cliente').where('idperfil', userId).update('foto', instagramProfilePic);
-        return res.redirect(`https://acasaprime1.com.br/dashboardCliente?token=${userId}`);
+        return res.redirect(`https://acasaprime1.com.br/dashboardCliente?token=${instagramId}`);
       } else {
         // Inserir novo usuário
         const T = await connection('cliente').insert(Data);
         console.log('Novo usuário cadastrado:', T);
 
-        return res.redirect(`https://acasaprime1.com.br/dashboardCliente?token=${userId}`);
+        return res.redirect(`https://acasaprime1.com.br/dashboardCliente?token=${instagramId}`);
       }
 
     } catch (err) {
