@@ -131,9 +131,9 @@ export class Automacao {
             // se for null efetuar a puyblicação com o horario definido por padrão na criação do calendario.
             // verificar se ahora do processamento é a mesma da publicação.
             this.logger.debug('hora do servidor.::::', hora)
-            this.logger.debug(publicao[cont].hora)
-            this.logger.debug('verificação de hora ',hora === parseInt(horaUser[0].horario))
-            if(hora === parseInt(horaUser[0].horario)){
+            this.logger.debug('hora da publicação na culçuna da publicação hora definida autoimaticamente.',publicao[cont].hora)
+            this.logger.debug('verificação de hora ',hora - 3 === parseInt(horaUser[0].horario))
+            if(hora - 3 === parseInt(horaUser[0].horario)){
                 this.logger.debug('criar container')
                 // verificar o formato da publicação
                 if(publicao[cont].formato === 'carrossel'){
