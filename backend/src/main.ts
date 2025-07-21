@@ -46,7 +46,7 @@ app.use('/image', (req, res, next) => {
 
   express.static(publicDir)(req, res, next);
 });
-  await app.listen(3333);
+  await app.listen(3333, '0.0.0.0');
   console.log(`Aplicação rodando em: na porta:3333`);
 }
 
