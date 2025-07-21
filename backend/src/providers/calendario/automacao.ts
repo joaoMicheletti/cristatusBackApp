@@ -20,7 +20,7 @@ export class Automacao {
     .where('publicado', null)// buscar publicações  com base na  data de hoje e hora atual.
     const chave = await connection('automacao').select('token')
     this.logger.debug('Called when the current second is 45');
-    this.logger.debug('dia:',dia," mes:", mes, " ano:", ano)
+    this.logger.debug('hora', hora,'dia:',dia," mes:", mes, " ano:", ano)
     // fazer um loop para cada publicação encontrada. 
     this.logger.debug(publicao)
     let cont = 0;
@@ -132,8 +132,8 @@ export class Automacao {
             // verificar se ahora do processamento é a mesma da publicação.
             this.logger.debug('hora do servidor.::::', hora)
             this.logger.debug('hora da publicação na culçuna da publicação hora definida autoimaticamente.',publicao[cont].hora)
-            this.logger.debug('verificação de hora ',hora - 3 === parseInt(horaUser[0].horario))
-            if(hora - 3 === parseInt(horaUser[0].horario)){
+            this.logger.debug('verificação de hora ',hora === parseInt(horaUser[0].horario))
+            if(hora === parseInt(horaUser[0].horario)){
                 this.logger.debug('criar container')
                 // verificar o formato da publicação
                 if(publicao[cont].formato === 'carrossel'){
