@@ -43,7 +43,7 @@ export class Automacao {
                 } else if(publicao[cont].formato === 'estatico') {
                     this.logger.debug('estatico')
                     // efetuar apublicação no formato de video ou estatico.
-                    let url: string = `https://graph.facebook.com/v23.0/${horaUser[0].idInsta}/media?image_url=https://urchin-upright-hardly.ngrok-free.app/image/${publicao[cont].nomeArquivos}&caption=${encodeURIComponent(publicao[cont].legenda)}&access_token=${chave[0].token}`
+                    let url: string = `https://graph.facebook.com/v23.0/${horaUser[0].idInsta}/media?image_url=https://www.acasaprime1.com.br/image/${publicao[cont].nomeArquivos}&caption=${encodeURIComponent(publicao[cont].legenda)}&access_token=${chave[0].token}`
                     // efetuar a criação do container :
                     this.logger.debug(url)
                     const resp = await fetch(url, { method: 'POST' });
@@ -94,7 +94,7 @@ export class Automacao {
                         `https://graph.facebook.com/v23.0/${horaUser[0].idPerfil}/media` ,
                         new URLSearchParams({
                             media_type: 'REELS',
-                            video_url: `https://urchin-upright-hardly.ngrok-free.app/image/processed-${publicao[cont].nomeArquivos}`,
+                            video_url: `https://www.acasaprime1.com.br/image/processed-${publicao[cont].nomeArquivos}`,
                             caption: publicao[cont].legenda,
                             access_token: chave[0].token,
                         }),
@@ -123,7 +123,7 @@ export class Automacao {
 
                 }
             } else {
-                this.logger.debug('nao esta na hora de efetuar apublicvação desse post');
+                this.logger.debug('Não está na hora de efetuar apublicação desse Post');
             }
         } else {
             this.logger.debug('aqui não é null', horaUser)
@@ -141,7 +141,7 @@ export class Automacao {
                     this.logger.debug('estaticoooo')
                     this.logger.debug(horaUser[0]);
                     // efetuar apublicação no formato de video ou estatico.
-                    let url: string = `https://graph.facebook.com/v23.0/${horaUser[0].idInsta}/media?image_url=https://urchin-upright-hardly.ngrok-free.app/image/${publicao[cont].nomeArquivos}&caption=${encodeURIComponent(publicao[cont].legenda)}&access_token=${chave[0].token}`
+                    let url: string = `https://graph.facebook.com/v23.0/${horaUser[0].idInsta}/media?image_url=https://www.acasaprime1.com.br/image/${publicao[cont].nomeArquivos}&caption=${encodeURIComponent(publicao[cont].legenda)}&access_token=${chave[0].token}`
                     // efetuar a criação do container :
                     this.logger.debug(url)
                     const resp = await fetch(url, { method: 'POST' });
