@@ -7,7 +7,7 @@ const ffmpeg = require('fluent-ffmpeg');
 @Injectable()
 export class Automacao {
   private readonly logger = new Logger(Automacao.name);
-  @Cron('10 * * * * *')  async handleCron() {
+  @Cron('30 * * * * *')  async handleCron() {
     
     const data = new Date();
     const dia = data.getDate();// dia
@@ -20,6 +20,7 @@ export class Automacao {
     .where('publicado', null)// buscar publicações  com base na  data de hoje e hora atual.
     const chave = await connection('automacao').select('token')
     this.logger.debug('Called when the current second is 45');
+    this.logger.debug('dia:',dia," mes:", mes, " ano:", ano)
     // fazer um loop para cada publicação encontrada. 
     this.logger.debug(publicao)
     let cont = 0;
@@ -129,9 +130,9 @@ export class Automacao {
             this.logger.debug('aqui não é null', horaUser)
             // se for null efetuar a puyblicação com o horario definido por padrão na criação do calendario.
             // verificar se ahora do processamento é a mesma da publicação.
-            this.logger.debug(hora)
+            this.logger.debug('hora do servidor.::::', hora)
             this.logger.debug(publicao[cont].hora)
-            this.logger.debug(hora === parseInt(horaUser[0].horario))
+            this.logger.debug('verificação de hora ',hora === parseInt(horaUser[0].horario))
             if(hora === parseInt(horaUser[0].horario)){
                 this.logger.debug('criar container')
                 // verificar o formato da publicação
@@ -222,6 +223,7 @@ export class Automacao {
             }
         }
         cont+= 1;
-    }; 
+    };
+    this.logger.debug('nada encontrado para ser publicado.')
   }
 }
