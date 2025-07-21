@@ -1,5 +1,4 @@
 import {Injectable } from "@nestjs/common";
-import axios from "axios";
 import { console, url } from "inspector";
 import { CalendarioDTO } from "src/controllers/caledarioController/calendarioDTo";
 import connection from "src/database/connection";
@@ -71,20 +70,42 @@ export class CalendarioEditorial {
         console.log('resposta',res);
         // inviar notificação /avisando os editores que o material esta diponivel e aguarda a criação dos conteudos.
         // como nao temos o sistema de colaboradores e sus respectivas responsabilidades vamos encamiha a notificação para todos.
-        let listanotification = await connection('notifications').where('typeUser', 'Crister').select('*')
-        console.log('Lista', listanotification);
-        console.log('')
-        for(let i = 0; i < listanotification.length; i++ ){
-            const subscription = {
-                endpoint: listanotification[i].endPoint,
-                keys: {
-                    p256dh: listanotification[i].p256dh,
-                    auth: listanotification[i].auth
-                }
-
-            };
-            WebPush.sendNotification(subscription, `O Conteudo do dia ${data.dia}/${data.mes}/${data.ano} do Clinete (${Cliente[0].user})- está dispónivel na área de ajustes, aguardando as Midias que compoem o Post.`)
-            console.log(' corpo da notificação',subscription)
+        // vincular perfil dos clientes ao editor / designer
+        //variavel com a empresa 
+        await console.log('Cliente erro',Cliente)
+        let empresa = Cliente[0].empresa;
+        
+        // disparar notificação somente para o responsavel. ou seja atraves do token do usuario vamos inviar essa notificação.
+        // pegar dados dos funcionarios da empres que cuida do perfil do lead atual:
+        let colaboradores =  await connection('colaborador').where('empresa', empresa);
+        
+        // loop para mandar notificação para os responsaveis pela edição / designer
+        let contador = 0;
+        while(contador < colaboradores.length){
+            if(colaboradores[contador].funcao === 'editor'|| colaboradores[contador].funcao === 'designer'){
+                //registar notificação no banco de dados;
+                let insetDataNotification = {
+                    token: colaboradores[contador].token,
+                    corpoNotification: `Crie e faça o upload das midias para o post da DATA: ${data.dia}/${data.mes}/${data.ano} do Cliente : ${Cliente[0].user}`,
+                    status: 'pendente'
+                };
+                
+                let notificationRegisterAreaNotification = await connection('notificationArea').insert(insetDataNotification);
+                console.log('REgistrando notificação na area de notificação.', notificationRegisterAreaNotification);
+                
+                // envioar notificação ?webPush.
+                let notFicationIndivisdual = await connection('notifications').where('idUser', colaboradores[contador].token).select('*')
+                const subscription = {
+                    endpoint: notFicationIndivisdual[0].endPoint,
+                    keys: {
+                        p256dh: notFicationIndivisdual[0].p256dh,
+                        auth: notFicationIndivisdual[0].auth
+                    }
+                };
+                
+                WebPush.sendNotification(subscription, `Crie e faça o upload das midias para o post da DATA: ${data.dia}/${data.mes}/${data.ano} do Cliente : ${Cliente[0].user}`)
+                console.log(' corpo da notificação',subscription)  
+            }
         }
         return({})
     };

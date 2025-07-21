@@ -13,4 +13,5 @@ export class RegisterUserClietDTO {
     foto:string;
     id: string;
     idInsta: string;
+    empresa:string;
 }

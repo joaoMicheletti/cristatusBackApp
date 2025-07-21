@@ -6,7 +6,7 @@ import connection from "src/database/connection";
 const publicKey = 'BLX2aIItjzqywDuszr0Gx9b6-WdwxIlwUWx2VO_daQGA6ccrsbdowUopB2KpFE9WmYJm1wybW-7uuClCL1d__H8';
 const privateKey = 'gYlYb7-x14nlg5gaPS40n_ZdhnNzF_xHjBi7TUyzWzc';
 
-webpush.setVapidDetails('https://flowly.app.br/', publicKey, privateKey)
+webpush.setVapidDetails('https://acasaprime1.com.br/', publicKey, privateKey)
 
 @Controller()
 export class Notifications {

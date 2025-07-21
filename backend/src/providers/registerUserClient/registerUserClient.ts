@@ -14,7 +14,7 @@ export class RegisterUserServide {
             return {res: "Usuário Já cadastrado"};
         }
         else {
-            const {user, pass, initPlano, idPerfil} = data;  // desconstruindo o data para crar um novo ogjeto 
+            const {user, pass, initPlano, idPerfil, empresa} = data;  // desconstruindo o data para crar um novo ogjeto 
             var token =  initPlano+user // token de acesso 
             //objeto comas infomações a serem escritas no database.
             var Data = {
@@ -22,7 +22,8 @@ export class RegisterUserServide {
                 pass,
                 initPlano, 
                 token,
-                idPerfil
+                idPerfil,
+                empresa
             }
             var response = await connection('cliente').insert(Data);
             // validar se o dado foi inserido no database 
