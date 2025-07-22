@@ -8,10 +8,11 @@ export class LoginCristerService{
     async Login(data: LoginCristerDTO): Promise<object> {
         console.log('LoginCrister', data)
         let {user, pass} = data
-        let condition = 'User not found!';
+        let condition :any = 'User not found!';
         let response = await connection('crister').where('cpf', user).select('*');
 
         console.log('response:',response)
+        // empresa encontrada
         if(response.length > 0){
             console.log('aqui');
             if(response[0].pass === pass){
@@ -20,7 +21,23 @@ export class LoginCristerService{
             } else {
                 condition += 'User not found!';
             }
-        }       
+          //buscar colaborador.  
+        } else {
+            // buscar colaborador
+            let colab = await connection('colaborador').where('user', user);
+            console.log(colab)
+            if (colab.length > 0 ){
+                if(colab[0].pass === pass){
+                    console.log(colab[0].pass === pass)
+                    condition = {
+                        colab: colab[0].token
+                    }
+                    console.log(condition)
+                } else {
+                    condition += 'User not found!';
+                }
+            }
+        }      
         return {res: condition};
     };
     async Register(data: LoginCristerDTO): Promise<object> {

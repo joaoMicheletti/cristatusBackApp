@@ -25,4 +25,5 @@ export class CalendarioDTO {
     token: string;
     user: string;
     datalimite:string;
+    endPoint: string;
 }

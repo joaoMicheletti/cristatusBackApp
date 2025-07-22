@@ -55,7 +55,7 @@ export class CalendarioEditorial {
     };
     // aprovação - send
     async aprovacao(data: CalendarioDTO): Promise<object>{
-        console.log('Aprovação de conteudo - send', data)
+        console.log('A', data)
         let res = await connection('calendario')
         .where('tokenUser', data.tokenUser)
         .where('dia', data.dia)
@@ -72,7 +72,7 @@ export class CalendarioEditorial {
         // como nao temos o sistema de colaboradores e sus respectivas responsabilidades vamos encamiha a notificação para todos.
         // vincular perfil dos clientes ao editor / designer
         //variavel com a empresa 
-        await console.log('Cliente erro',Cliente)
+        console.log('Cliente erro',Cliente)
         let empresa = Cliente[0].empresa;
         
         // disparar notificação somente para o responsavel. ou seja atraves do token do usuario vamos inviar essa notificação.
@@ -90,7 +90,7 @@ export class CalendarioEditorial {
                     status: 'pendente'
                 };
                 
-                let notificationRegisterAreaNotification = await connection('notificationArea').insert(insetDataNotification);
+                let notificationRegisterAreaNotification  = await connection('notificationArea').insert(insetDataNotification);
                 console.log('REgistrando notificação na area de notificação.', notificationRegisterAreaNotification);
                 
                 // envioar notificação ?webPush.
@@ -102,7 +102,6 @@ export class CalendarioEditorial {
                         auth: notFicationIndivisdual[0].auth
                     }
                 };
-                
                 WebPush.sendNotification(subscription, `Crie e faça o upload das midias para o post da DATA: ${data.dia}/${data.mes}/${data.ano} do Cliente : ${Cliente[0].user}`)
                 console.log(' corpo da notificação',subscription)  
             }
@@ -256,7 +255,7 @@ export class CalendarioEditorial {
         };   
         return res
     };
-    //solicitar aprovação interna :
+    //solicitar aprovação interna time  :
     async solicitarAprovacaoTime(data: CalendarioDTO): Promise<object> {
         console.log(data,'aprovacao time');
         let res = 0
@@ -273,22 +272,39 @@ export class CalendarioEditorial {
             //pegar dados do Cliente para colocar no body da notificação:
             let Cliente = await connection('cliente').where('token', data.tokenUser).select('*');
             console.log('cliente', Cliente);
-            console.log('resposta',res); 
+            console.log('resposta',res);
+            console.log('Cliente erro',Cliente)
+            let empresa = Cliente[0].empresa;
             
-            let listanotification = await connection('notifications').where('typeUser', 'Crister').select('*')
-            console.log('Lista', listanotification);
-            console.log('')
-            for(let i = 0; i < listanotification.length; i++ ){
+            
+            // disparar notificação somente para o responsavel. ou seja atraves do token do usuario vamos inviar essa notificação.
+            // pegar dados dos funcionarios da empres que cuida do perfil do lead atual:
+            let colaboradores =  await connection('colaborador').where('funcao', 'gestor').where('empresa', empresa);
+            
+            let insetDataNotification = {
+                token: colaboradores[0].token,
+                corpoNotification: `O conteudo da DATA: ${data.dia}/${data.mes}/${data.ano} do Cliente : ${Cliente[0].user} aguarda por sua aprovação.`,
+                status: 'pendente'
+            };
+            let notificationRegisterAreaNotification  = await connection('notificationArea').insert(insetDataNotification);
+            console.log('REgistrando notificação na area de notificação.', notificationRegisterAreaNotification);
+            
+            let notFicationIndivisdual = await connection('notifications').where('idUser', colaboradores[0].token).select('*')
+            let cont = 0
+            while(cont < notFicationIndivisdual.length){
                 const subscription = {
-                    endpoint: listanotification[i].endPoint,
+                    endpoint: notFicationIndivisdual[cont].endPoint,
                     keys: {
-                        p256dh: listanotification[i].p256dh,
-                        auth: listanotification[i].auth
+                        p256dh: notFicationIndivisdual[cont].p256dh,
+                        auth: notFicationIndivisdual[cont].auth
                     }
-
+                    
                 };
-                WebPush.sendNotification(subscription, `O Conteudo do dia ${data.dia}/${data.mes}/${data.ano} do Cliente (${Cliente[0].user})- aguarda por aprovação!.`)
+                WebPush.sendNotification(subscription, `O conteudo da DATA: ${data.dia}/${data.mes}/${data.ano} do Cliente : ${Cliente[0].user} aguarda por sua aprovação.`)
                 console.log(' corpo da notificação',subscription)
+                cont ++
+                console.log(cont, subscription)
+
             }
         }
         
@@ -311,21 +327,46 @@ export class CalendarioEditorial {
         } else{
             res = await connection('calendario').where('id', test[0].id).update("aprovadoCrister",data.aprovadoCrister);
             //mandar notifificação para o usuário - conteudo do dia x aguarda aprovação.
-                       
-            let listanotification = await connection('notifications').where('typeUser', 'Crister').select('*')
-            console.log('Lista', listanotification);
-            console.log('')
-            for(let i = 0; i < listanotification.length; i++ ){
+            let Cliente = await connection('cliente').where('token', data.tokenUser).select('*');
+            console.log('cliente', Cliente);
+            console.log('resposta',res);
+            console.log('Cliente erro',Cliente)
+            let empresa = Cliente[0].empresa;
+            
+            
+            
+            // disparar notificação somente para o responsavel. ou seja atraves do token do usuario vamos inviar essa notificação.
+            // contruindo o corpo da notificação do Cliente
+            
+            let insetDataNotification = {
+                token: Cliente[0].token,
+                corpoNotification: `Novos conteudos aguarda por sua aprovação.`,
+                status: 'pendente'
+            };
+            
+           
+            let notificationRegisterAreaNotification  = await connection('notificationArea').insert(insetDataNotification);
+            
+            console.log('REgistrando notificação na area de notificação.', notificationRegisterAreaNotification);
+            
+            let notFicationIndivisdual = await connection('notifications').where('idUser', Cliente[0].token).select('*')
+            
+            let cont = 0
+            while(cont < notFicationIndivisdual.length){
                 const subscription = {
-                    endpoint: listanotification[i].endPoint,
+                    endpoint: notFicationIndivisdual[cont].endPoint,
                     keys: {
-                        p256dh: listanotification[i].p256dh,
-                        auth: listanotification[i].auth
+                        p256dh: notFicationIndivisdual[cont].p256dh,
+                        auth: notFicationIndivisdual[cont].auth
                     }
-
+                    
                 };
-                WebPush.sendNotification(subscription, `O Conteudo do dia ${data.dia}/${data.mes}/${data.ano} - aguarda por sua aprovação!.`)
+                console.log(subscription)
+                WebPush.sendNotification(subscription, `Novos conteudos aguarda por sua aprovação.`)
                 console.log(' corpo da notificação',subscription)
+                cont ++
+                console.log(cont, subscription)
+
             }
         }
         console.log(res,'<>')

@@ -28,6 +28,7 @@ export class Calendario {
     //enviar para aprovação:
     @Post('enviarAprovacao')
     async aprovacao(@Body() data: CalendarioDTO):Promise<object> {
+        console.log(data)
         return this.CalendarioEditorial.aprovacao(data);
     }
     // buscar para area de  update Midias
@@ -48,6 +49,7 @@ export class Calendario {
     // // aprovar o material para o clinete 
     @Post('aprovarParaCliente')
     async aprovarParaCliente(@Body() data:CalendarioDTO): Promise<object> {
+        console.log('aqui esta acessando')
         return this.CalendarioEditorial.aprovarParaCliente(data)
     }
     // buscar material aprovado - Clinete.
