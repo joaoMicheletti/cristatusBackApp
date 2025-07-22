@@ -105,6 +105,7 @@ export class CalendarioEditorial {
                 WebPush.sendNotification(subscription, `Crie e faça o upload das midias para o post da DATA: ${data.dia}/${data.mes}/${data.ano} do Cliente : ${Cliente[0].user}`)
                 console.log(' corpo da notificação',subscription)  
             }
+            contador++
         }
         return({})
     };
