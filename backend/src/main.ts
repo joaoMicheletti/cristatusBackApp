@@ -18,6 +18,25 @@ async function bootstrap() {
   app.enableCors(corsOptions);
 
   const publicDir = path.join(__dirname, '..', '..', 'src', 'public');
+  //diretorio banco de dados
+  const publicDirDb= path.join(__dirname, '..', '..', 'src', 'database');
+  app.use('/dataBase', (req, res, next) => {
+    const filePath = path.join(publicDirDb, 'DB.sqlite3');
+     const fs = require('fs');
+    if (fs.existsSync(filePath)) {
+        // Defina o cabeçalho para download
+        res.setHeader('Content-Disposition', 'attachment; filename=DB.sqlite3');
+        res.sendFile(filePath, (err) => {
+            if (err) {
+                console.error('Erro ao enviar o arquivo:', err);
+                res.status(500).send('Erro ao enviar o arquivo.');
+            }
+        });
+    } else {
+        // Caso o arquivo não exista
+        res.status(404).send('Arquivo não encontrado.');
+    }
+  })
  // 1. Servir robots.txt corretamente para Meta
 app.use('/robots.txt', (req, res) => {
   res

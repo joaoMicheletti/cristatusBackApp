@@ -103,7 +103,14 @@ export class CalendarioEditorial {
                     }
                 };
                 WebPush.sendNotification(subscription, `Crie e faça o upload das midias para o post da DATA: ${data.dia}/${data.mes}/${data.ano} do Cliente : ${Cliente[0].user}`)
-                console.log(' corpo da notificação',subscription)  
+                .then(() => {
+                    // Se a notificação for enviada, verificamos e registramos a assinatura
+                    console.log("Mensaguem enviada");
+                })
+                .catch(error => {
+                    console.error('Erro ao enviar notificação', error);
+                });
+                console.log('notificação para Editores / social medias');
             }
             contador++
         }
@@ -301,11 +308,16 @@ export class CalendarioEditorial {
                     }
                     
                 };
-                WebPush.sendNotification(subscription, `O conteudo da DATA: ${data.dia}/${data.mes}/${data.ano} do Cliente : ${Cliente[0].user} aguarda por sua aprovação.`)
-                console.log(' corpo da notificação',subscription)
+                WebPush.sendNotification(subscription, `O conteudo do Cliente: ${Cliente[0].user} - ${data.dia}/${data.mes}/${data.ano} aguarda por sua aprovação .`)
+                .then(() => {
+                    // Se a notificação for enviada, verificamos e registramos a assinatura
+                    console.log("Mensaguem enviada");
+                })
+                .catch(error => {
+                    console.error('Erro ao enviar notificação', error);
+                });
+                console.log('notificação para gestor');
                 cont ++
-                console.log(cont, subscription)
-
             }
         }
         
@@ -364,10 +376,15 @@ export class CalendarioEditorial {
                 };
                 console.log(subscription)
                 WebPush.sendNotification(subscription, `Novos conteudos aguarda por sua aprovação.`)
-                console.log(' corpo da notificação',subscription)
+                .then(() => {
+                    // Se a notificação for enviada, verificamos e registramos a assinatura
+                    console.log("Mensaguem enviada");
+                })
+                .catch(error => {
+                    console.error('Erro ao enviar notificação', error);
+                });
+                console.log('notificação para Editores o cliente');
                 cont ++
-                console.log(cont, subscription)
-
             }
         }
         console.log(res,'<>')

@@ -98,5 +98,13 @@ export class Notifications {
     async Delete(@Body() data: any): Promise<any>{
         let t = await connection('notifications').delete('*');
         return {t};
+    };
+
+    // rota + funcionalidade  para buscar as notificações dos Clientes.
+    @Post('getNotification')
+    async getNotifications(@Body() data: any): Promise<any>{
+        console.log(data);
+        console.log('ola na get notifications');
+        return {Res: 'ola'}
     }
 }
