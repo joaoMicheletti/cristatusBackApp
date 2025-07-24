@@ -1,6 +1,7 @@
 import { Body, Controller, Get, Post } from "@nestjs/common";
 import * as webpush from 'web-push';
 import connection from "src/database/connection";
+import { NotFoundError } from "rxjs";
 
 
 const publicKey = 'BLX2aIItjzqywDuszr0Gx9b6-WdwxIlwUWx2VO_daQGA6ccrsbdowUopB2KpFE9WmYJm1wybW-7uuClCL1d__H8';
@@ -103,8 +104,20 @@ export class Notifications {
     // rota + funcionalidade  para buscar as notificações dos Clientes.
     @Post('getNotification')
     async getNotifications(@Body() data: any): Promise<any>{
-        console.log(data);
+        console.log('Usertipe A - Crister colab ou empresa',data.userA);
+        console.log('Usertipe B - Cristr cliente',data.userB)
+        if(data.userA === null){
+            // buscar notificações de clientes;
+            let notifications = await connection('notificationArea').where('token', data.userB).where('status','pendente').select("*");
+            console.log(notifications);
+            return {NotFoundError}
+        }else if(data.userB === null){
+            // buscar notificações de colaboradores.
+            let notifications = await connection('notificationArea').where('token', data.userA).where('status','pendente').select("*");
+            console.log(notifications);
+            return {NotFoundError}
+        }
         console.log('ola na get notifications');
-        return {Res: 'ola'}
-    }
+    };
+    // rota para atualizar o status da notificação.
 }
