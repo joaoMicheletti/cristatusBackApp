@@ -95,22 +95,27 @@ export class CalendarioEditorial {
                 
                 // envioar notificação ?webPush.
                 let notFicationIndivisdual = await connection('notifications').where('idUser', colaboradores[contador].token).select('*')
-                const subscription = {
-                    endpoint: notFicationIndivisdual[0].endPoint,
-                    keys: {
-                        p256dh: notFicationIndivisdual[0].p256dh,
-                        auth: notFicationIndivisdual[0].auth
-                    }
-                };
-                WebPush.sendNotification(subscription, `Crie e faça o upload das midias para o post da DATA: ${data.dia}/${data.mes}/${data.ano} do Cliente : ${Cliente[0].user}`)
-                .then(() => {
-                    // Se a notificação for enviada, verificamos e registramos a assinatura
-                    console.log("Mensaguem enviada");
-                })
-                .catch(error => {
-                    console.error('Erro ao enviar notificação', error);
-                });
-                console.log('notificação para Editores / social medias');
+                if(notFicationIndivisdual.length > 0){
+                    // enviar notificação webPush
+                    const subscription = {
+                        endpoint: notFicationIndivisdual[0].endPoint,
+                        keys: {
+                            p256dh: notFicationIndivisdual[0].p256dh,
+                            auth: notFicationIndivisdual[0].auth
+                        }
+                    };
+                    WebPush.sendNotification(subscription, `Crie e faça o upload das midias para o post da DATA: ${data.dia}/${data.mes}/${data.ano} do Cliente : ${Cliente[0].user}`)
+                    .then(() => {
+                        // Se a notificação for enviada, verificamos e registramos a assinatura
+                        console.log("Mensaguem enviada");
+                    })
+                    .catch(error => {
+                        console.error('Erro ao enviar notificação', error);
+                    });
+                    console.log('notificação para Editores / social medias');
+                } else {
+                    console.log('assinatura de notificação nao encontrada social / editor atualização de conteudo ')
+                }
             }
             contador++
         }
@@ -298,26 +303,31 @@ export class CalendarioEditorial {
             console.log('REgistrando notificação na area de notificação.', notificationRegisterAreaNotification);
             
             let notFicationIndivisdual = await connection('notifications').where('idUser', colaboradores[0].token).select('*')
-            let cont = 0
-            while(cont < notFicationIndivisdual.length){
-                const subscription = {
-                    endpoint: notFicationIndivisdual[cont].endPoint,
-                    keys: {
-                        p256dh: notFicationIndivisdual[cont].p256dh,
-                        auth: notFicationIndivisdual[cont].auth
-                    }
-                    
-                };
-                WebPush.sendNotification(subscription, `O conteudo do Cliente: ${Cliente[0].user} - ${data.dia}/${data.mes}/${data.ano} aguarda por sua aprovação .`)
-                .then(() => {
-                    // Se a notificação for enviada, verificamos e registramos a assinatura
-                    console.log("Mensaguem enviada");
-                })
-                .catch(error => {
-                    console.error('Erro ao enviar notificação', error);
-                });
-                console.log('notificação para gestor');
-                cont ++
+            if(notFicationIndivisdual.length > 0){
+                // enviar notificação Webpush
+                let cont = 0
+                while(cont < notFicationIndivisdual.length){
+                    const subscription = {
+                        endpoint: notFicationIndivisdual[cont].endPoint,
+                        keys: {
+                            p256dh: notFicationIndivisdual[cont].p256dh,
+                            auth: notFicationIndivisdual[cont].auth
+                        }
+                        
+                    };
+                    WebPush.sendNotification(subscription, `O conteudo do Cliente: ${Cliente[0].user} - ${data.dia}/${data.mes}/${data.ano} aguarda por sua aprovação .`)
+                    .then(() => {
+                        // Se a notificação for enviada, verificamos e registramos a assinatura
+                        console.log("Mensaguem enviada");
+                    })
+                    .catch(error => {
+                        console.error('Erro ao enviar notificação', error);
+                    });
+                    console.log('notificação para gestor');
+                    cont ++
+                }
+            }else{
+                 console.log('nao foi encontrado nenhuma assinatura de notification, para usar o Webpush')
             }
         }
         
@@ -363,29 +373,35 @@ export class CalendarioEditorial {
             console.log('REgistrando notificação na area de notificação.', notificationRegisterAreaNotification);
             
             let notFicationIndivisdual = await connection('notifications').where('idUser', Cliente[0].token).select('*')
-            
-            let cont = 0
-            while(cont < notFicationIndivisdual.length){
-                const subscription = {
-                    endpoint: notFicationIndivisdual[cont].endPoint,
-                    keys: {
-                        p256dh: notFicationIndivisdual[cont].p256dh,
-                        auth: notFicationIndivisdual[cont].auth
-                    }
-                    
+            if(notFicationIndivisdual.length > 0){
+                // fazer o loop
+                let cont = 0
+                while(cont < notFicationIndivisdual.length){
+                    const subscription = {
+                        endpoint: notFicationIndivisdual[cont].endPoint,
+                        keys: {
+                            p256dh: notFicationIndivisdual[cont].p256dh,
+                            auth: notFicationIndivisdual[cont].auth
+                        }
+                        
+                    };
+                    console.log(subscription)
+                    WebPush.sendNotification(subscription, `Novos conteudos aguarda por sua aprovação.`)
+                    .then(() => {
+                        // Se a notificação for enviada, verificamos e registramos a assinatura
+                        console.log("Mensaguem enviada");
+                    })
+                    .catch(error => {
+                        console.error('Erro ao enviar notificação', error);
+                    });
+                    console.log('notificação para Editores o cliente');
+                    cont ++
                 };
-                console.log(subscription)
-                WebPush.sendNotification(subscription, `Novos conteudos aguarda por sua aprovação.`)
-                .then(() => {
-                    // Se a notificação for enviada, verificamos e registramos a assinatura
-                    console.log("Mensaguem enviada");
-                })
-                .catch(error => {
-                    console.error('Erro ao enviar notificação', error);
-                });
-                console.log('notificação para Editores o cliente');
-                cont ++
-            }
+
+            } else {
+                console.log('nao foi encontrado nenhuma assinatura de notification, para usar o Webpush')
+            };
+            
         }
         console.log(res,'<>')
         //  
