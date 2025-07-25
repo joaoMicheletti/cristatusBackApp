@@ -386,7 +386,7 @@ export class CalendarioEditorial {
                         
                     };
                     console.log(subscription)
-                    WebPush.sendNotification(subscription, `Novos conteudos aguarda por sua aprovação.`)
+                    WebPush.sendNotification(subscription, `Conteudos aguardam por sua aprovação.`)
                     .then(() => {
                         // Se a notificação for enviada, verificamos e registramos a assinatura
                         console.log("Mensaguem enviada");

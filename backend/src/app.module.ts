@@ -28,6 +28,7 @@ import { colaboradorProvider } from './providers/colaborador/colaboradorService'
 import {colaboradorController} from './controllers/colaborador/colaboradorController';
 //callback
 import { CallBackController } from './controllers/callbakFacebbok';
+import { notiFicationsDto } from './controllers/notifications/notificationDto';
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -48,6 +49,7 @@ import { CallBackController } from './controllers/callbakFacebbok';
   providers: [
     Automacao, 
     Notificacao,
+    notiFicationsDto,
     colaboradorProvider, 
     LogunUserServices, 
     RegisterUserServide, 
