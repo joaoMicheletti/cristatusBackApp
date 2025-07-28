@@ -29,6 +29,14 @@ export class colaboradorProvider {
         }else {
             let res = await connection('colaborador').insert(Data);
             if(res.length > 0){
+                // cfiar o Wf do colaborador:
+                let dataWf = {
+                    token: Data.token,
+                    funcao: Data.funcao,
+                    empresa: Data.empresa
+                }
+                let wf = await connection('wf').insert(dataWf);
+                console.log('CRiado o Wf do colaborador.', wf)
                 return{res: "Registrado com sucesso!"}
             } else {
                 return {res: "Erro ao efetuar o registro"}
