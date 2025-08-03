@@ -211,6 +211,10 @@ export class Automacao {
                         this.logger.debug('❌ Container ID não retornado');
                         return;
                     };
+
+                    //sybir video no servidor da meta.
+                    let metaSendMovie = await axios.post(`https://rupload.facebook.com/ig-api-upload/v23.0/${containerId}` )
+                    this.logger.debug(metaSendMovie)
                     /** 
                     // 2. Esperar processamento (Instagram recomenda 30s~60s)
                     this.logger.debug('⏳ Aguardando 60 segundos para o processamento do vídeo...');
