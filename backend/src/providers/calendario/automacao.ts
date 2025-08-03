@@ -164,7 +164,7 @@ export class Automacao {
                     console.log('aqui é o proceso de publicação de videos!')
                     // antes de crair o container vamos processar o video.
                     this.logger.debug('aqui é o processod e publição de video!')
-                    async function corrigirVideo(inputPath: string, outputPath: string): Promise<void> {
+                    /*async function corrigirVideo(inputPath: string, outputPath: string): Promise<void> {
                         console.log('Video aqui:', inputPath)
                         if (!inputPath || !outputPath) {
                             throw new Error('Caminhos de input ou output estão indefinidos!');
@@ -191,13 +191,14 @@ export class Automacao {
                         `src/public/${publicao[cont].nomeArquivos}`,
                         `src/public/processed-${publicao[cont].nomeArquivos}`
                     );
+                    */
                     ///cirando container
 
                     const createRes = await axios.post(
-                        `https://graph.facebook.com/v23.0/${horaUser[0].idPerfil}/media` ,
+                        `https://graph.facebook.com/v23.0/${horaUser[0].idInsta}/media` ,
                         new URLSearchParams({
                             media_type: 'REELS',
-                            video_url: `http://ec2-54-233-243-115.sa-east-1.compute.amazonaws.com:3333/image/processed-${publicao[cont].nomeArquivos}`,
+                            video_url: `https://www.acasaprime1.com.br/image/${publicao[cont].nomeArquivos}`,
                             caption: publicao[cont].legenda,
                             access_token: chave[0].token,
                         }),
