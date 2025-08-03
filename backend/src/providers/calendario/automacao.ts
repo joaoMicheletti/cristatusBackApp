@@ -194,13 +194,17 @@ export class Automacao {
                     */
                     ///cirando container
 
+
                     const createRes = await axios.post(
                         `https://graph.facebook.com/v23.0/${horaUser[0].idInsta}/media` ,
                         new URLSearchParams({
                             media_type: 'REELS',
                             video_url: `https://www.acasaprime1.com.br/image/${publicao[cont].nomeArquivos}`,
+                            share_to_feed: 'true',
                             caption: publicao[cont].legenda,
                             access_token: chave[0].token,
+                            thumb_offset: '3'
+                            
                         }),
                     );
 
@@ -213,8 +217,9 @@ export class Automacao {
                     };
 
                     const headers = {
-                         'Authorization': `OAuth ${chave[0].token}`, // Exemplo de cabeçalho de autorização
-                        'Content-Type': 'application/json'  // Definindo o tipo de conteúdo como JSON
+                        'Authorization': `OAuth ${chave[0].token}`, // Exemplo de cabeçalho de autorização
+                        'Content-Type': 'application/json',
+                        'file_url': `https://www.acasaprime1.com.br/image/${publicao[cont].nomeArquivos}`  // Definindo o tipo de conteúdo como JSON
                     };
                     //sybir video no servidor da meta.
                     let metaSendMovie = await axios.post(`https://rupload.facebook.com/ig-api-upload/v23.0/${containerId}`, headers )
