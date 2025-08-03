@@ -193,9 +193,8 @@ export class Automacao {
                     );
                     */
                     ///cirando container
-
                     const createRes = await axios.post(
-                        `https://graph.facebook.com/v23.0/${horaUser[0].idInsta}/media` ,
+                        `https://graph.instagram.com/v23.0/${horaUser[0].idInsta}/media` ,
                         new URLSearchParams({
                             media_type: 'REELS',
                             video_url: `https://www.acasaprime1.com.br/image/${publicao[cont].nomeArquivos}`,
