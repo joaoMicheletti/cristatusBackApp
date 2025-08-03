@@ -212,8 +212,12 @@ export class Automacao {
                         return;
                     };
 
+                    const headers = {
+                         'Authorization': `OAuth ${chave[0].token}`, // Exemplo de cabeçalho de autorização
+                        'Content-Type': 'application/json'  // Definindo o tipo de conteúdo como JSON
+                    };
                     //sybir video no servidor da meta.
-                    let metaSendMovie = await axios.post(`https://rupload.facebook.com/ig-api-upload/v23.0/${containerId}` )
+                    let metaSendMovie = await axios.post(`https://rupload.facebook.com/ig-api-upload/v23.0/${containerId}`, headers )
                     this.logger.debug(metaSendMovie)
                     /** 
                     // 2. Esperar processamento (Instagram recomenda 30s~60s)
