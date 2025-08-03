@@ -159,13 +159,16 @@ export class Automacao {
                         let update = await connection('calendario').where('id', publicao[cont].id).update('publicado', 'publicado');
                         this.logger.debug(update)
                     }
-                } else if(publicao[cont].formato === 'video'){0
+                } else if(publicao[cont].formato === 'video'){
                     this.logger.debug('videoooooo');
+                    console.log('aqui é o proceso de publicação de videos!')
                     // antes de crair o container vamos processar o video.
+                    this.logger.debug('aqui é o processod e publição de video!')
                     async function corrigirVideo(inputPath: string, outputPath: string): Promise<void> {
                         if (!inputPath || !outputPath) {
                             throw new Error('Caminhos de input ou output estão indefinidos!');
                         }
+                        console.log('Video aqui:', inputPath)
 
                         return new Promise((resolve, reject) => {
                             ffmpeg(inputPath)
