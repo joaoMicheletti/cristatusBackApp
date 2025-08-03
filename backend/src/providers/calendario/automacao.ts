@@ -193,17 +193,15 @@ export class Automacao {
                     );
                     */
                     ///cirando container
-                    const headers = {
-                        'Authorization': `Bearer ${chave[0].token}`, // Exemplo de cabeçalho de autorização
-                        'Content-Type': 'application/json'  // Definindo o tipo de conteúdo como JSON
-                    };
+
                     const createRes = await axios.post(
-                        `https://graph.instagram.com/v23.0/${horaUser[0].idInsta}/media` ,
+                        `https://graph.facebook.com/v23.0/${horaUser[0].idInsta}/media` ,
                         new URLSearchParams({
                             media_type: 'REELS',
                             video_url: `https://www.acasaprime1.com.br/image/${publicao[cont].nomeArquivos}`,
-                            caption: publicao[cont].legenda
-                        }), {headers}
+                            caption: publicao[cont].legenda,
+                            access_token: chave[0].token,
+                        }),
                     );
 
                     this.logger.debug('📦 Container criado com sucesso:');
@@ -213,6 +211,7 @@ export class Automacao {
                         this.logger.debug('❌ Container ID não retornado');
                         return;
                     };
+                    /** 
                     // 2. Esperar processamento (Instagram recomenda 30s~60s)
                     this.logger.debug('⏳ Aguardando 60 segundos para o processamento do vídeo...');
                     await new Promise((resolve) => setTimeout(resolve, 30000));
@@ -226,6 +225,7 @@ export class Automacao {
                         }),
                     );
                     this.logger.debug(publishRes);
+                    */
                 }
             }
         }
