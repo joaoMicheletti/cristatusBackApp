@@ -224,7 +224,7 @@ export class Automacao {
                             }
                         }
                     );
-                    this.logger.debug(statusRes)
+                    this.logger.debug(statusRes.data.data)
 
                     /*let publication = await axios.post(
                     `https://graph.facebook.com/v23.0/${horaUser[0].idInsta}/media_publish`,
