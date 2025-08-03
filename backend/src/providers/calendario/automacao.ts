@@ -219,7 +219,7 @@ export class Automacao {
                         `https://graph.facebook.com/v23.0/${containerId}`,
                         {
                             params: {
-                            fields: 'status_code,status,video_status_code',
+                            fields: 'status',
                             access_token: chave[0].token
                             }
                         }
