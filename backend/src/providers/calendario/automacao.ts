@@ -226,7 +226,7 @@ export class Automacao {
                     );
                     this.logger.debug(statusRes)
 
-                    let publication = await axios.post(
+                    /*let publication = await axios.post(
                     `https://graph.facebook.com/v23.0/${horaUser[0].idInsta}/media_publish`,
                     new URLSearchParams({
                         creation_id: containerId,
@@ -234,7 +234,7 @@ export class Automacao {
                     }),
                     { headers: { 'Content-Type': 'application/x-www-form-urlencoded' } }
                     );
-                    this.logger.debug(publication)
+                    this.logger.debug(publication)*/
 
                     /** 
                     // 2. Esperar processamento (Instagram recomenda 30s~60s)
