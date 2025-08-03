@@ -215,7 +215,9 @@ export class Automacao {
                         this.logger.debug('❌ Container ID não retornado');
                         return;
                     };
-                    const statusRes = await axios.get(
+                    let C = 0;
+                    while(C === 0){
+                        const statusRes = await axios.get(
                         `https://graph.facebook.com/v23.0/${containerId}`,
                         {
                             params: {
@@ -223,8 +225,16 @@ export class Automacao {
                             access_token: chave[0].token
                             }
                         }
-                    );
-                    this.logger.debug(statusRes.data.status)
+                        );
+                        this.logger.debug(statusRes.data.status)
+                        if(statusRes.data.status ==='In Progress: Media is still being processed.'){
+                            C+=0
+                        }else{
+                            C +=1;
+                        }
+
+                    }
+                    
 
                     /*let publication = await axios.post(
                     `https://graph.facebook.com/v23.0/${horaUser[0].idInsta}/media_publish`,
