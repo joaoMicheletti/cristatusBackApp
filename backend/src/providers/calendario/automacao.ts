@@ -193,8 +193,13 @@ export class Automacao {
                     );
                     */
                     ///cirando container
-
-
+                    let videoUrl = `https://www.acasaprime1.com.br/image/${publicao[cont].nomeArquivos}`
+                    const testVideo = await axios.head(videoUrl);
+                        if (testVideo.status !== 200) {
+                        throw new Error('URL de vídeo inacessível');
+                    }
+                    
+                    /*
                     const createRes = await axios.post(
                         `https://graph.facebook.com/v23.0/${horaUser[0].idInsta}/media` ,
                         new URLSearchParams({
@@ -236,7 +241,7 @@ export class Automacao {
                     }
                     
 
-                    /*let publication = await axios.post(
+                    let publication = await axios.post(
                     `https://graph.facebook.com/v23.0/${horaUser[0].idInsta}/media_publish`,
                     new URLSearchParams({
                         creation_id: containerId,
