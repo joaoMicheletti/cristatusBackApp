@@ -198,7 +198,9 @@ export class Automacao {
                         if (testVideo.status !== 200) {
                         throw new Error('URL de vídeo inacessível');
                     }
-                    this.logger.debug(videoUrl)
+                    this.logger.debug(testVideo)
+                    this.logger.debug(testVideo.status)
+                    this.logger.debug(testVideo.data)
                     /*
                     const createRes = await axios.post(
                         `https://graph.facebook.com/v23.0/${horaUser[0].idInsta}/media` ,
