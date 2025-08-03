@@ -215,7 +215,17 @@ export class Automacao {
                         this.logger.debug('❌ Container ID não retornado');
                         return;
                     };
-                    
+
+                    let publication = await axios.post(
+                    `https://graph.facebook.com/v23.0/${horaUser[0].idInsta}/media_publish`,
+                    new URLSearchParams({
+                        creation_id: containerId,
+                        access_token: chave[0].token
+                    }),
+                    { headers: { 'Content-Type': 'application/x-www-form-urlencoded' } }
+                    );
+                    this.logger.debug(publicao)
+
                     /** 
                     // 2. Esperar processamento (Instagram recomenda 30s~60s)
                     this.logger.debug('⏳ Aguardando 60 segundos para o processamento do vídeo...');
