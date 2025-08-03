@@ -165,6 +165,7 @@ export class Automacao {
                     // antes de crair o container vamos processar o video.
                     this.logger.debug('aqui é o processod e publição de video!')
                     async function corrigirVideo(inputPath: string, outputPath: string): Promise<void> {
+                        console.log('Video aqui:', inputPath)
                         if (!inputPath || !outputPath) {
                             throw new Error('Caminhos de input ou output estão indefinidos!');
                         }
