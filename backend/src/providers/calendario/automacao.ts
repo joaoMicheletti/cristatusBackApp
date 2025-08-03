@@ -193,14 +193,17 @@ export class Automacao {
                     );
                     */
                     ///cirando container
+                    const headers = {
+                        'Authorization': `Bearer ${chave[0].token}`, // Exemplo de cabeçalho de autorização
+                        'Content-Type': 'application/json'  // Definindo o tipo de conteúdo como JSON
+                    };
                     const createRes = await axios.post(
                         `https://graph.instagram.com/v23.0/${horaUser[0].idInsta}/media` ,
                         new URLSearchParams({
                             media_type: 'REELS',
                             video_url: `https://www.acasaprime1.com.br/image/${publicao[cont].nomeArquivos}`,
-                            caption: publicao[cont].legenda,
-                            access_token: chave[0].token,
-                        }),
+                            caption: publicao[cont].legenda
+                        }), {headers}
                     );
 
                     this.logger.debug('📦 Container criado com sucesso:');
