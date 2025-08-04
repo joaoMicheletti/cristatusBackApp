@@ -197,7 +197,7 @@ export class Automacao {
                     const testVideo = await axios.head(videoUrl);
                         if (testVideo.status !== 200) {
                         throw new Error('URL de vídeo inacessível');
-                    }
+                    }   
                     this.logger.debug(testVideo.status)
                     this.logger.debug(testVideo.data)
                     /*
