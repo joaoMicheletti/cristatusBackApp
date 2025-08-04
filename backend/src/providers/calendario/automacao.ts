@@ -201,7 +201,7 @@ export class Automacao {
                     this.logger.debug(testVideo)
                     this.logger.debug(testVideo.status)
                     this.logger.debug(testVideo.data)
-                    
+                    /*
                     const createRes = await axios.post(
                         `https://graph.facebook.com/v23.0/${horaUser[0].idInsta}/media` ,
                         new URLSearchParams({
@@ -242,7 +242,7 @@ export class Automacao {
 
                     }
                     
-                    /*
+                    
                     let publication = await axios.post(
                     `https://graph.facebook.com/v23.0/${horaUser[0].idInsta}/media_publish`,
                     new URLSearchParams({
