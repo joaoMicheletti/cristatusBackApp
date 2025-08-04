@@ -198,8 +198,7 @@ export class Automacao {
                         throw new Error('URL de vídeo inacessível');
                     }   
                     this.logger.debug(`resposta da URL do Videos`,testVideo.status)
-                    this.logger.debug(testVideo.data)
-                    /*
+                    
                     const createRes = await axios.post(
                         `https://graph.facebook.com/v23.0/${horaUser[0].idInsta}/media` ,
                         new URLSearchParams({
@@ -220,6 +219,19 @@ export class Automacao {
                         this.logger.debug('❌ Container ID não retornado');
                         return;
                     };
+
+                    let attempts = 0;
+                    while (attempts < 20) {
+                        const statusRes = await axios.get(`https://graph.facebook.com/v23.0/${containerId}`, {
+                            params: { fields: 'status', access_token: chave[0].token }
+                        });
+
+                        if (statusRes.data.status === 'FINISHED') break;
+                        if (statusRes.data.status === 'ERROR') throw new Error('Erro no vídeo');
+                        await new Promise(r => setTimeout(r, 5000)); // espera 5s
+                        attempts++;
+                    }
+                    /*
                     let C = 0;
                     while(C === 0){
                         const statusRes = await axios.get(
