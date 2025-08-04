@@ -222,12 +222,20 @@ export class Automacao {
 
                     let attempts = 0;
                     while (attempts < 20) {
+                        this.logger.debug(`Lopinkg, ${attempts}`)
                         const statusRes = await axios.get(`https://graph.facebook.com/v23.0/${containerId}`, {
                             params: { fields: 'status', access_token: chave[0].token }
                         });
 
-                        if (statusRes.data.status === 'FINISHED') break;
-                        if (statusRes.data.status === 'ERROR') throw new Error('Erro no vídeo');
+                        if (statusRes.data.status === 'FINISHED'){
+                            this.logger.debug('Finished')
+                            break;
+                        } 
+                        if (statusRes.data.status === 'ERROR'){
+                            this.logger.debug('erro ao processar video')
+                            throw new Error('Erro no vídeo');
+
+                        } 
                         await new Promise(r => setTimeout(r, 5000)); // espera 5s
                         attempts++;
                     }
