@@ -161,7 +161,6 @@ export class Automacao {
                     }
                 } else if(publicao[cont].formato === 'video'){
                     this.logger.debug('videoooooo');
-                    console.log('aqui é o proceso de publicação de videos!')
                     // antes de crair o container vamos processar o video.
                     this.logger.debug('aqui é o processod e publição de video!')
                     /*async function corrigirVideo(inputPath: string, outputPath: string): Promise<void> {
@@ -198,7 +197,7 @@ export class Automacao {
                         if (testVideo.status !== 200) {
                         throw new Error('URL de vídeo inacessível');
                     }   
-                    this.logger.debug(testVideo.status)
+                    this.logger.debug(`resposta da URL do Videos`,testVideo.status)
                     this.logger.debug(testVideo.data)
                     /*
                     const createRes = await axios.post(
