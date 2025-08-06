@@ -163,12 +163,11 @@ export class Automacao {
                     this.logger.debug('videoooooo');
                     // antes de crair o container vamos processar o video.
                     this.logger.debug('aqui é o processod e publição de video!')
-                    /*async function corrigirVideo(inputPath: string, outputPath: string): Promise<void> {
-                        console.log('Video aqui:', inputPath)
+                    async function corrigirVideo(inputPath: string, outputPath: string): Promise<void> {
+                        console.log('Processando vídeo:', inputPath);
                         if (!inputPath || !outputPath) {
                             throw new Error('Caminhos de input ou output estão indefinidos!');
                         }
-                        console.log('Video aqui:', inputPath)
 
                         return new Promise((resolve, reject) => {
                             ffmpeg(inputPath)
@@ -177,20 +176,31 @@ export class Automacao {
                             .audioChannels(2)
                             .audioFrequency(44100)
                             .audioBitrate('128k')
-                            .size('1080x1920')
-                            .aspect('9:16')
-                            .outputOptions('-pix_fmt yuv420p')
-                            .on('end', () => resolve())
-                            .on('error', err => reject(new Error('Erro ao processar vídeo: ' + err.message)))
+                            .outputOptions([
+                                '-pix_fmt yuv420p',
+                                '-b:v 8000k',
+                                '-maxrate 8500k',
+                                '-bufsize 10000k',
+                                '-movflags +faststart',
+                                '-vf', 'scale=1080:1920:force_original_aspect_ratio=decrease,pad=1080:1920:(ow-iw)/2:(oh-ih)/2'
+                            ])
+                            .on('end', () => {
+                                console.log('Finalizado com sucesso:', outputPath);
+                                resolve();
+                            })
+                            .on('error', err => {
+                                console.error('Erro ao processar vídeo:', err);
+                                reject(new Error('Erro ao processar vídeo: ' + err.message));
+                            })
                             .save(outputPath);
                         });
-                    };
+                    }
+
                     this.logger.debug('processando o Vídeo...');
                     await corrigirVideo(
                         `src/public/${publicao[cont].nomeArquivos}`,
                         `src/public/processed-${publicao[cont].nomeArquivos}`
                     );
-                    */
                     ///cirando container
                     let videoUrl = `https://www.acasaprime1.com.br/image/${publicao[cont].nomeArquivos}`
                     const testVideo = await axios.head(videoUrl);
@@ -202,7 +212,7 @@ export class Automacao {
                     const createRes = await axios.post(
                         `https://graph.facebook.com/v23.0/${horaUser[0].idInsta}/media` ,
                         new URLSearchParams({
-                            media_type: 'VIDEO',
+                            media_type: 'REELS',
                             video_url: `https://www.acasaprime1.com.br/image/${publicao[cont].nomeArquivos}`,
                             share_to_feed: 'true',
                             caption: publicao[cont].legenda,
