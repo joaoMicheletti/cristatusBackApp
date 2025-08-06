@@ -202,7 +202,7 @@ export class Automacao {
                     const createRes = await axios.post(
                         `https://graph.facebook.com/v23.0/${horaUser[0].idInsta}/media` ,
                         new URLSearchParams({
-                            media_type: 'REELS',
+                            media_type: 'VIDEO',
                             video_url: `https://www.acasaprime1.com.br/image/${publicao[cont].nomeArquivos}`,
                             share_to_feed: 'true',
                             caption: publicao[cont].legenda,

@@ -15,6 +15,9 @@ console.log(t);
           cb(null, file.originalname);
         },
       }),
+      limits: {
+        fileSize: 3 * 1024 * 1024 * 1024 // 3GB
+      }
     }),
   ],
   controllers: [UploadController],
