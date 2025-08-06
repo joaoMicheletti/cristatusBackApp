@@ -16,6 +16,9 @@ async function bootstrap() {
   };
 
   app.enableCors(corsOptions);
+  // Aumenta o limite de requisição para até 5GB (ou mais se quiser)
+  app.use(express.json({ limit: '1gb' }));
+  app.use(express.urlencoded({ extended: true, limit: '1gb' }));
 
   const publicDir = path.join(__dirname, '..', '..', 'src', 'public');
   //diretorio banco de dados

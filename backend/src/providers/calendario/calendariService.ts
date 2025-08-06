@@ -293,7 +293,10 @@ export class CalendarioEditorial {
             // disparar notificação somente para o responsavel. ou seja atraves do token do usuario vamos inviar essa notificação.
             // pegar dados dos funcionarios da empres que cuida do perfil do lead atual:
             let colaboradores =  await connection('colaborador').where('funcao', 'gestor').where('empresa', empresa);
-            let insetDataNotification = {
+            if(colaboradores.length < 1){
+
+            } else {
+                let insetDataNotification = {
                 token: colaboradores[0].token,
                 corpoNotification: `O conteudo da DATA: ${data.dia}/${data.mes}/${data.ano} do Cliente : ${Cliente[0].user} aguarda por sua aprovação.`,
                 status: 'pendente'
@@ -328,6 +331,9 @@ export class CalendarioEditorial {
             }else{
                  console.log('nao foi encontrado nenhuma assinatura de notification, para usar o Webpush')
             }
+
+            }
+            
         }
         
         return{res}
