@@ -25,6 +25,7 @@ export async function up(knex: Knex): Promise<void> {
         table.string('descricaoArte');
         table.string('publicado');
         table.string('hora');
+        table.string('processo');
     });
 }
 

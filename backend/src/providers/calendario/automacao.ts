@@ -7,16 +7,17 @@ const ffmpeg = require('fluent-ffmpeg');
 @Injectable()
 export class Automacao {
   private readonly logger = new Logger(Automacao.name);
-  @Cron('30 * * * * *')  async handleCron() {
+ @Cron('0 */5 * * * *')  async handleCron() {
     
     const data = new Date();
     const dia = data.getDate();// dia
     const mes = data.getMonth() + 1;//mes ssomar com +1 para deichar a foramtação correata
     const ano = data.getFullYear();// ano
-    const hora = data.getHours(); // hopra atual
+    const hora = data.getHours(); // hora atual
     const publicao = await connection("calendario")
     .where('dia', dia).where('mes', mes).where('ano', ano)
     .where('aprovadoCliente', 'aprovado')
+    .where('processo', null)// definir um campo para previnir que inicie o processo de publicação 2X
     .where('publicado', null)// buscar publicações  com base na  data de hoje e hora atual.
     const chave = await connection('automacao').select('token')
     this.logger.debug('Called when the current second is 45');
@@ -161,6 +162,9 @@ export class Automacao {
                     }
                 } else if(publicao[cont].formato === 'video'){
                     this.logger.debug('videoooooo');
+                    // atualizar o campo processo no banco de dados para evitar iniciar o segundo processamenteo da publicação.
+                    let updateProcesso = await connection('calandario').where('id', publicao[cont].id).update('processo', 'processado');
+                    this.logger.debug('Campo processo Ataulizado,',updateProcesso);
                     // antes de crair o container vamos processar o video.
                     this.logger.debug('aqui é o processod e publição de video!')
                     async function corrigirVideo(inputPath: string, outputPath: string): Promise<void> {
@@ -189,18 +193,20 @@ export class Automacao {
                                 resolve();
                             })
                             .on('error', err => {
-                                console.error('Erro ao processar vídeo:', err);
+                                this.logger.debug('Erro ao processar vídeo:', err);
                                 reject(new Error('Erro ao processar vídeo: ' + err.message));
                             })
                             .save(outputPath);
                         });
                     }
+                    
 
                     this.logger.debug('processando o Vídeo...');
                     await corrigirVideo(
                         `src/public/${publicao[cont].nomeArquivos}`,
                         `src/public/processed-${publicao[cont].nomeArquivos}`
                     );
+                    /*?
                     ///cirando container
                     let videoUrl = `https://www.acasaprime1.com.br/image/${publicao[cont].nomeArquivos}`
                     const testVideo = await axios.head(videoUrl);
