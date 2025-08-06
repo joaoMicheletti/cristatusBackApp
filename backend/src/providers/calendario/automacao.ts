@@ -163,7 +163,7 @@ export class Automacao {
                 } else if(publicao[cont].formato === 'video'){
                     this.logger.debug('videoooooo');
                     // atualizar o campo processo no banco de dados para evitar iniciar o segundo processamenteo da publicação.
-                    let updateProcesso = await connection('calandario').where('id', publicao[cont].id).update('processo', 'processado');
+                    let updateProcesso = await connection('calendario').where('id', publicao[cont].id).update('processo', 'processado');
                     this.logger.debug('Campo processo Ataulizado,',updateProcesso);
                     // antes de crair o container vamos processar o video.
                     this.logger.debug('aqui é o processod e publição de video!')
