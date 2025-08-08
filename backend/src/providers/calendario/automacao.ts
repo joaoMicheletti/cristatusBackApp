@@ -8,7 +8,7 @@ const ffmpeg = require('fluent-ffmpeg');
 export class Automacao {
   private readonly logger = new Logger(Automacao.name);
  //@Cron('0 */5 * * * *')  async handleCron() {
-@Cron('* 30 * * * *')  async handleCron() {
+@Cron('10 * * * * *')  async handleCron() {
     
     const data = new Date();
     const dia = data.getDate();// dia
