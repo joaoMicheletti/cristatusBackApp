@@ -240,6 +240,21 @@ export class Automacao {
                         this.logger.debug('❌ Container ID não retornado');
                         return;
                     };
+                    // request para pefgar o tamanh odo areuivo iten obrigatorio  de ser enviado na request, atraves do header.
+                    async function getFileSize(fileUrl) {
+                        try {
+                            const response = await axios.head(fileUrl);
+                            const fileSize = response.headers["content-length"];
+                            console.log(`Tamanho do arquivo: ${fileSize} bytes`);
+                            return fileSize;
+                        } catch (error) {
+                            console.error("Erro ao obter tamanho do arquivo:", error.message);
+                        }
+                        }
+
+                        // Exemplo de uso:
+                        let size = getFileSize(`https://www.acasaprime1.com.br/image/${publicao[cont].nomeArquivos}`);
+                        this.logger.debug(size);
                     // enviar video Grande para o UPload.
                     let uploadToFaceBook = await axios.post(
                         `https://rupload.facebook.com/ig-api-upload/v23.0/${containerId}`,
