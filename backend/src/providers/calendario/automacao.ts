@@ -7,7 +7,8 @@ const ffmpeg = require('fluent-ffmpeg');
 @Injectable()
 export class Automacao {
   private readonly logger = new Logger(Automacao.name);
- @Cron('0 */5 * * * *')  async handleCron() {
+ //@Cron('0 */5 * * * *')  async handleCron() {
+@Cron('* 30 * * * *')  async handleCron() {
     
     const data = new Date();
     const dia = data.getDate();// dia
@@ -167,7 +168,7 @@ export class Automacao {
                     this.logger.debug('Campo processo Ataulizado,',updateProcesso);
                     // antes de crair o container vamos processar o video.
                     this.logger.debug('aqui é o processod e publição de video!')
-                    async function corrigirVideo(inputPath: string, outputPath: string): Promise<void> {
+                    /*?async function corrigirVideo(inputPath: string, outputPath: string): Promise<void> {
                         console.log('Processando vídeo:', inputPath);
                         if (!inputPath || !outputPath) {
                             throw new Error('Caminhos de input ou output estão indefinidos!');
@@ -205,8 +206,11 @@ export class Automacao {
                     await corrigirVideo(
                         `src/public/${publicao[cont].nomeArquivos}`,
                         `src/public/processed-${publicao[cont].nomeArquivos}`
-                    );
-                    /*?
+                    );/** */
+
+                    //testar com calma a publçicação de videos com o facebbok 
+                    //upload_type– Defina como resumable, se estiver criando uma sessão de upload retomável para um arquivo de vídeo grande
+                    
                     ///cirando container
                     let videoUrl = `https://www.acasaprime1.com.br/image/${publicao[cont].nomeArquivos}`
                     const testVideo = await axios.head(videoUrl);
@@ -218,6 +222,7 @@ export class Automacao {
                     const createRes = await axios.post(
                         `https://graph.facebook.com/v23.0/${horaUser[0].idInsta}/media` ,
                         new URLSearchParams({
+                            upload_type: 'resumable',
                             media_type: 'REELS',
                             video_url: `https://www.acasaprime1.com.br/image/${publicao[cont].nomeArquivos}`,
                             share_to_feed: 'true',
@@ -235,7 +240,8 @@ export class Automacao {
                         this.logger.debug('❌ Container ID não retornado');
                         return;
                     };
-
+                    // enviar video Grande para o UPload.
+                    /*?
                     let attempts = 0;
                     while (attempts < 20) {
                         this.logger.debug(`Lopinkg, ${attempts}`)
@@ -285,9 +291,9 @@ export class Automacao {
                     }),
                     { headers: { 'Content-Type': 'application/x-www-form-urlencoded' } }
                     );
-                    this.logger.debug(publication)*/
+                    this.logger.debug(publication)
 
-                    /** 
+                    
                     // 2. Esperar processamento (Instagram recomenda 30s~60s)
                     this.logger.debug('⏳ Aguardando 60 segundos para o processamento do vídeo...');
                     await new Promise((resolve) => setTimeout(resolve, 30000));
