@@ -216,7 +216,7 @@ export class Automacao {
                     const testVideo = await axios.head(videoUrl);
                         if (testVideo.status !== 200) {
                         throw new Error('URL de vídeo inacessível');
-                    }   
+                        }   
                     this.logger.debug(`resposta da URL do Videos`,testVideo.status)
                     
                     const createRes = await axios.post(
@@ -241,6 +241,26 @@ export class Automacao {
                         return;
                     };
                     // enviar video Grande para o UPload.
+                    let uploadToFaceBook = await axios.post(
+                        `https://rupload.facebook.com/ig-api-upload/v23.0/${containerId}`,
+                        null,
+                        {
+                            headers: {
+                            Authorization: chave[0].token,
+                            "file_url": `https://www.acasaprime1.com.br/image/${publicao[cont].nomeArquivos}`,
+                            },
+                            maxBodyLength: Infinity,
+                        }
+                    );
+                    let contagem =0;
+                    while(true){
+                        if(uploadToFaceBook.status === 200){
+                            this.logger.debug('sucesso', uploadToFaceBook);
+                            break;
+                        }
+                        this.logger.debug(contagem);
+                        contagem ++
+                    }
                     /*?
                     let attempts = 0;
                     while (attempts < 20) {
