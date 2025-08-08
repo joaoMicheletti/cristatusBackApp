@@ -241,20 +241,20 @@ export class Automacao {
                         return;
                     };
                     // request para pefgar o tamanh odo areuivo iten obrigatorio  de ser enviado na request, atraves do header.
-                    async function getFileSize(fileUrl) {
+                    async function getFileSize(fileUrl: string): Promise<number | null> {
                         try {
-                            const response = await axios.head(fileUrl);
-                            const fileSize = response.headers["content-length"];
-                            console.log(`Tamanho do arquivo: ${fileSize} bytes`);
-                            return fileSize;
-                        } catch (error) {
-                            console.error("Erro ao obter tamanho do arquivo:", error.message);
+                            const resp = await axios.head(fileUrl);
+                            const len = resp.headers["content-length"];
+                            return len ? Number(len) : null;
+                        } catch (err:any) {
+                            console.error("Erro ao obter tamanho do arquivo:", err.message);
+                            return null;
                         }
                         }
 
-                        // Exemplo de uso:
-                        let size = getFileSize(`https://www.acasaprime1.com.br/image/${publicao[cont].nomeArquivos}`);
-                        this.logger.debug(size);
+                        // dentro de um método async (por ex., no seu cron):
+                        const size = await getFileSize(`https://www.acasaprime1.com.br/image/${publicao[cont].nomeArquivos}`);
+                        this.logger.debug(`size = ${size}`);
                     // enviar video Grande para o UPload.
                     let uploadToFaceBook = await axios.post(
                         `https://rupload.facebook.com/ig-api-upload/v23.0/${containerId}`,
