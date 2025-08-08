@@ -262,6 +262,8 @@ export class Automacao {
                         {
                             headers: {
                             Authorization: `OAuth ${chave[0].token}`,
+                            offset: "0",
+                            file_size: String(size),
                             "file_url": `https://www.acasaprime1.com.br/image/${publicao[cont].nomeArquivos}`,
                             },
                             maxBodyLength: Infinity,
