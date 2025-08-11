@@ -267,14 +267,18 @@ export class Automacao {
                         return size;
                     };
 
+                    // 1) tamanho do arquivo
+                    const size = await getRemoteFileSize(videoUrl);
+                    if (!size || size <= 0) throw new Error("Tamanho do arquivo inválido.");
+                    this.logger.debug('Tamanho do aquivo em bites',size)
+
+                    /** 
                     async function uploadPublicVideoToIGRupload(opts: {
                         containerId: string;
                     }) {
                         const { containerId} = opts;
 
-                        // 1) tamanho do arquivo
-                        const size = await getRemoteFileSize(videoUrl);
-                        if (!size || size <= 0) throw new Error("Tamanho do arquivo inválido.");
+                        
 
                         // 2) POST rupload
                         try {
@@ -304,7 +308,7 @@ export class Automacao {
                             );
                         }
                     }
-                   
+                   */
 
 
 
