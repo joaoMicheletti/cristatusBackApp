@@ -214,9 +214,9 @@ export class Automacao {
                     ///cirando container
                     let videoUrl = `https://www.acasaprime1.com.br/image/${publicao[cont].nomeArquivos}`
                     const testVideo = await axios.head(videoUrl);
-                        if (testVideo.status !== 200) {
-                        throw new Error('URL de vídeo inacessível');
-                        }   
+                    if (testVideo.status !== 200) {
+                    throw new Error('URL de vídeo inacessível');
+                    }   
                     this.logger.debug(`resposta da URL do Videos`,testVideo.status)
                     
                     const createRes = await axios.post(
@@ -240,44 +240,75 @@ export class Automacao {
                         this.logger.debug('❌ Container ID não retornado');
                         return;
                     };
-                    // request para pefgar o tamanh odo areuivo iten obrigatorio  de ser enviado na request, atraves do header.
-                    async function getFileSize(fileUrl: string): Promise<number | null> {
-                        try {
-                            const resp = await axios.head(fileUrl);
-                            const len = resp.headers["content-length"];
-                            return len ? Number(len) : null;
-                        } catch (err:any) {
-                            console.error("Erro ao obter tamanho do arquivo:", err.message);
-                            return null;
-                        }
-                        }
 
-                        // dentro de um método async (por ex., no seu cron):
-                        const size = await getFileSize(`https://www.acasaprime1.com.br/image/${publicao[cont].nomeArquivos}`);
-                        this.logger.debug(`size = ${size}`);
-                    // enviar video Grande para o UPload.
-                    let uploadToFaceBook = await axios.post(
-                        `https://rupload.facebook.com/ig-api-upload/v23.0/${containerId}`,
-                        null,
-                        {
-                            headers: {
-                            Authorization: `OAuth ${chave[0].token}`,
-                            offset: "0",
-                            file_size: String(size),
-                            "file_url": `https://www.acasaprime1.com.br/image/${publicao[cont].nomeArquivos}`,
-                            },
-                            maxBodyLength: Infinity,
+
+                    /** Tenta HEAD; se falhar, usa GET com Range para obter o tamanho via Content-Range */
+                    async function getRemoteFileSize(url: string): Promise<number> {
+                        // 1) HEAD
+                        try {
+                            const r = await axios.head(url, { maxRedirects: 5, timeout: 15000 });
+                            const len = r.headers["content-length"];
+                            if (len && !isNaN(Number(len))) return Number(len);
+                        } catch {}
+
+                        // 2) GET com Range (1 byte)
+                        const r2 = await axios.get(url, {
+                            headers: { Range: "bytes=0-0" },
+                            validateStatus: s => (s >= 200 && s < 300) || s === 206,
+                            responseType: "arraybuffer",
+                            maxRedirects: 5,
+                            timeout: 20000,
+                        });
+                        const cr = r2.headers["content-range"]; // ex: "bytes 0-0/1234567"
+                        if (!cr) throw new Error("Sem Content-Range; servidor não informa tamanho.");
+                        const total = cr.split("/")[1];
+                        const size = Number(total);
+                        if (!size || isNaN(size)) throw new Error("Content-Range inválido.");
+                        return size;
+                    };
+
+                    async function uploadPublicVideoToIGRupload(opts: {
+                        containerId: string;
+                    }) {
+                        const { containerId} = opts;
+
+                        // 1) tamanho do arquivo
+                        const size = await getRemoteFileSize(videoUrl);
+                        if (!size || size <= 0) throw new Error("Tamanho do arquivo inválido.");
+
+                        // 2) POST rupload
+                        try {
+                            const resp = await axios.post(
+                            `https://rupload.facebook.com/ig-api-upload/v23.0/${containerId}`,
+                            null,
+                            {
+                                headers: {
+                                Authorization: `OAuth ${chave[0].token}`,
+                                offset: "0",
+                                file_size: String(size),
+                                file_url: videoUrl,
+                                },
+                                maxBodyLength: Infinity,
+                                timeout: 60000,
+                                validateStatus: s => s === 200 || s === 201,
+                            }
+                            );
+                            return resp.data;
+                        } catch (err: any) {
+                            // Logs úteis para debugar
+                            const data = err?.response?.data;
+                            const dbg = data?.debug_info || data;
+                            throw new Error(
+                            `Falha no rupload (${err?.response?.status}): ` +
+                            `${dbg?.type || ""} - ${dbg?.message || JSON.stringify(dbg) || err.message}`
+                            );
                         }
-                    );
-                    let contagem =0;
-                    while(true){
-                        if(uploadToFaceBook.status === 200){
-                            this.logger.debug('sucesso', uploadToFaceBook);
-                            break;
-                        }
-                        this.logger.debug(contagem);
-                        contagem ++
                     }
+                   
+
+
+
+
                     /*?
                     let attempts = 0;
                     while (attempts < 20) {
