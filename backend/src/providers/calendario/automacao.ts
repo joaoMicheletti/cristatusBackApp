@@ -272,46 +272,32 @@ export class Automacao {
                     if (!size || size <= 0) throw new Error("Tamanho do arquivo inválido.");
                     this.logger.debug('Tamanho do aquivo em bites',size)
 
-                    /** 
-                    async function uploadPublicVideoToIGRupload(opts: {
-                        containerId: string;
-                    }) {
-                        const { containerId} = opts;
-
-                        
-
-                        // 2) POST rupload
-                        try {
-                            const resp = await axios.post(
-                            `https://rupload.facebook.com/ig-api-upload/v23.0/${containerId}`,
-                            null,
-                            {
-                                headers: {
-                                Authorization: `OAuth ${chave[0].token}`,
-                                offset: "0",
-                                file_size: String(size),
-                                file_url: videoUrl,
-                                },
-                                maxBodyLength: Infinity,
-                                timeout: 60000,
-                                validateStatus: s => s === 200 || s === 201,
-                            }
-                            );
-                            return resp.data;
-                        } catch (err: any) {
-                            // Logs úteis para debugar
-                            const data = err?.response?.data;
-                            const dbg = data?.debug_info || data;
-                            throw new Error(
-                            `Falha no rupload (${err?.response?.status}): ` +
-                            `${dbg?.type || ""} - ${dbg?.message || JSON.stringify(dbg) || err.message}`
-                            );
+                    try {
+                        const resp = await axios.post(
+                        `https://rupload.facebook.com/ig-api-upload/v23.0/${containerId}`,
+                        null,
+                        {
+                            headers: {
+                            Authorization: `OAuth ${chave[0].token}`,
+                            offset: "0",
+                            file_size: String(size),
+                            file_url: videoUrl,
+                            },
+                            maxBodyLength: Infinity,
+                            timeout: 60000,
+                            validateStatus: s => s === 200 || s === 201,
                         }
+                        );
+                        this.logger.debug(resp.data);
+                    } catch (err: any) {
+                        // Logs úteis para debugar
+                        const data = err?.response?.data;
+                        const dbg = data?.debug_info || data;
+                        throw new Error(
+                        `Falha no rupload (${err?.response?.status}): ` +
+                        `${dbg?.type || ""} - ${dbg?.message || JSON.stringify(dbg) || err.message}`
+                        );
                     }
-                   */
-
-
-
 
                     /*?
                     let attempts = 0;
