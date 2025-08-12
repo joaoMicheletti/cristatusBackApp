@@ -213,45 +213,14 @@ export class Automacao {
                     
                     ///cirando container
                     let videoUrl = `https://www.acasaprime1.com.br/image/${publicao[cont].nomeArquivos}`
-                    const testVideo = await axios.head(videoUrl);
-                    if (testVideo.status !== 200) {
-                    throw new Error('URL de vídeo inacessível');
-                    }   
-                    this.logger.debug(`resposta da URL do Videos`,testVideo.status)
-                    
-                    const createRes = await axios.post(
-                        `https://graph.facebook.com/v23.0/${horaUser[0].idInsta}/media` ,
-                        new URLSearchParams({
-                            upload_type: 'resumable',
-                            media_type: 'REELS',
-                            video_url: `https://www.acasaprime1.com.br/image/${publicao[cont].nomeArquivos}`,
-                            share_to_feed: 'true',
-                            caption: publicao[cont].legenda,
-                            access_token: chave[0].token,
-                            thumb_offset: '3'
-                            
-                        }),
-                    );
-                    
-                    this.logger.debug('📦 Container criado com sucesso:');
-                    this.logger.debug(JSON.stringify(createRes.data, null, 2));
-                    const containerId = createRes.data.id;
-                    if (!containerId) {
-                        this.logger.debug('❌ Container ID não retornado');
-                        return;
-                    };
-
-
-                    /** Tenta HEAD; se falhar, usa GET com Range para obter o tamanho via Content-Range */
                     async function getRemoteFileSize(url: string): Promise<number> {
-                        // 1) HEAD
+                        // 1) Tenta HEAD
                         try {
                             const r = await axios.head(url, { maxRedirects: 5, timeout: 15000 });
                             const len = r.headers["content-length"];
                             if (len && !isNaN(Number(len))) return Number(len);
                         } catch {}
-
-                        // 2) GET com Range (1 byte)
+                        // 2) Fallback: GET 1 byte com Range
                         const r2 = await axios.get(url, {
                             headers: { Range: "bytes=0-0" },
                             validateStatus: s => (s >= 200 && s < 300) || s === 206,
@@ -260,44 +229,99 @@ export class Automacao {
                             timeout: 20000,
                         });
                         const cr = r2.headers["content-range"]; // ex: "bytes 0-0/1234567"
-                        if (!cr) throw new Error("Sem Content-Range; servidor não informa tamanho.");
-                        const total = cr.split("/")[1];
-                        const size = Number(total);
-                        if (!size || isNaN(size)) throw new Error("Content-Range inválido.");
-                        return size;
-                    };
+                        if (!cr || !cr.includes("/")) {
+                            throw new Error("Servidor não informa Content-Range/Content-Length.");
+                        }
+                        const total = Number(cr.split("/")[1]);
+                        if (!total || isNaN(total)) throw new Error("Content-Range inválido.");
+                        return total;
+                        }
 
-                    // 1) tamanho do arquivo
-                    const size = await getRemoteFileSize(videoUrl);
-                    if (!size || size <= 0) throw new Error("Tamanho do arquivo inválido.");
-                    this.logger.debug('Tamanho do aquivo em bites',size)
+                        async function postarReelComURLPublica(
+                            igUserId: string,
+                            accessToken: string,
+                            videoUrl: string,
+                            caption: string
+                        ) {
+                        // 0) Sanidade da URL
+                        const head = await axios.head(videoUrl, { timeout: 15000, maxRedirects: 5 });
+                        if (head.status < 200 || head.status >= 400) {
+                            throw new Error(`URL do vídeo inacessível: HTTP ${head.status}`);
+                        }
+                        const contentType = head.headers["content-type"] || "";
+                        if (!contentType.startsWith("video/") && !contentType.includes("mp4")) {
+                            // não é obrigatório, mas ajuda a pegar problemas cedo
+                            throw new Error(`MIME suspeito para vídeo: ${contentType}`);
+                        }
 
-                    try {
-                        const resp = await axios.post(
-                        `https://rupload.facebook.com/ig-api-upload/v23.0/${containerId}`,
-                        null,
-                        {
+                        // 1) Cria container (resumable)
+                        const params = new URLSearchParams({
+                            upload_type: "resumable",
+                            media_type: "REELS",
+                            video_url: videoUrl,            // ok enviar já aqui
+                            share_to_feed: "true",
+                            caption,
+                            access_token: accessToken,
+                            thumb_offset: "3",
+                        });
+
+                        const createRes = await axios.post(
+                            `https://graph.facebook.com/v23.0/${igUserId}/media`,
+                            params,
+                            { timeout: 30000 }
+                        );
+                        const containerId = createRes.data?.id;
+                        if (!containerId) throw new Error("Container ID não retornado.");
+
+                        // 2) Tamanho do arquivo
+                        const fileSize = await getRemoteFileSize(videoUrl);
+                        if (!fileSize || fileSize <= 0) throw new Error("file_size inválido.");
+
+                        // 3) Rupload (pull upload)
+                        // Observação: sem body, tudo via headers
+                        // Importante: Authorization deve estar no formato "OAuth <token>"
+                        const ruploadUrl = `https://rupload.facebook.com/ig-api-upload/v23.0/${containerId}`;
+
+                        let rupload;
+                        try {
+                            rupload = await axios.post(ruploadUrl, null, {
                             headers: {
-                            Authorization: `OAuth ${chave[0].token}`,
-                            offset: "0",
-                            file_size: String(size),
-                            file_url: videoUrl,
+                                Authorization: `OAuth ${accessToken}`,
+                                offset: "0",
+                                file_size: String(fileSize),
+                                file_url: videoUrl,
                             },
                             maxBodyLength: Infinity,
                             timeout: 60000,
                             validateStatus: s => s === 200 || s === 201,
+                            });
+                        } catch (err: any) {
+                            const status = err?.response?.status;
+                            const dbg = err?.response?.data?.debug_info || err?.response?.data;
+                            // logs úteis pra entender
+                            throw new Error(
+                            `Falha no rupload (${status}): ` +
+                            `${dbg?.type || ""} - ${dbg?.message || JSON.stringify(dbg) || err.message}`
+                            );
                         }
+
+                        // 4) Publicar (finalizar criação)
+                        const publishRes = await axios.post(
+                            `https://graph.facebook.com/v23.0/${igUserId}/media_publish`,
+                            new URLSearchParams({
+                            creation_id: containerId,
+                            access_token: accessToken,
+                            }),
+                            { timeout: 30000 }
                         );
-                        this.logger.debug(resp.data);
-                    } catch (err: any) {
-                        // Logs úteis para debugar
-                        const data = err?.response?.data;
-                        const dbg = data?.debug_info || data;
-                        throw new Error(
-                        `Falha no rupload (${err?.response?.status}): ` +
-                        `${dbg?.type || ""} - ${dbg?.message || JSON.stringify(dbg) || err.message}`
-                        );
+
+                        return {
+                            containerId,
+                            ruploadStatus: rupload.status,
+                            publish: publishRes.data,
+                        };
                     }
+
 
                     /*?
                     let attempts = 0;
