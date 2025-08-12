@@ -267,31 +267,60 @@ export class Automacao {
                         return size;
                     };
 
-                    // 1) tamanho do arquivo
+                    // 1) log do rtamanho do tamanho do arquivo
                     const size = await getRemoteFileSize(videoUrl);
                     if (!size || size <= 0) throw new Error("Tamanho do arquivo inválido.");
                     this.logger.debug('Tamanho do aquivo em bites',size)
 
-                    try {
+                    const CHUNK = 2 * 1024 * 1024; // 2MB (pode usar 4MB/8MB também)
+                    let offset = 0;
+
+                    while (offset < size) {
+                        const end = Math.min(offset + CHUNK - 1, size - 1);
+
+                        // Baixa apenas o pedaço necessário do teu servidor (suporta Range)
+                        const part = await axios.get<ArrayBuffer>(videoUrl, {
+                            responseType: "arraybuffer",
+                            headers: { Range: `bytes=${offset}-${end}` },
+                            // importante aceitar 206
+                            validateStatus: (s) => (s >= 200 && s < 300) || s === 206,
+                        });
+
+                        const buf = Buffer.from(part.data);
+
+                        // Manda o chunk para o rupload COM O CORPO = bytes do chunk
                         const resp = await axios.post(
-                        `https://rupload.facebook.com/ig-api-upload/v23.0/${containerId}`,
-                        null,
-                        {
+                            `https://rupload.facebook.com/ig-api-upload/v23.0/${containerId}`,
+                            buf,
+                            {
                             headers: {
-                            Authorization: `OAuth ${chave[0].token}`,
-                            offset: "0",
-                            file_size: String(size),
-                            file_url: videoUrl,
+                                Authorization: `OAuth ${chave[0].token}`,
+                                "Content-Type": "application/octet-stream",
+
+                                // headers obrigatórios do protocolo
+                                offset: String(offset),              // onde começa este chunk
+                                file_size: String(size),             // tamanho total do vídeo
+
+                                // estes ajudam (muitos devs reportam ser necessários)
+                                "x-entity-name": String(containerId),
+                                "x-entity-length": String(size),
+                                "x-instagram-rupload-params": JSON.stringify({
+                                upload_id: String(containerId),
+                                media_type: "video",
+                                for_reel: true, // se for Reels
+                                }),
                             },
                             maxBodyLength: Infinity,
-                            timeout: 60000,
-                            validateStatus: s => s === 200 || s === 201,
-                        }
+                            maxContentLength: Infinity,
+                            timeout: 120000,
+                            validateStatus: (s) => s === 200 || s === 201,
+                            }
                         );
-                        this.logger.debug('REsposta do Try',resp)
-                    } catch (err: any) {
-                        // Logs úteis para debugar
-                       this.logger.debug(err)
+
+                        // Avança o offset pelo tamanho que você acabou de mandar
+                        offset += buf.length;
+                        // (Opcional) log: console.debug("enviado até", offset);
+                        this.logger.debug('Lod do While', offset);
                     }
 
 
