@@ -3,7 +3,8 @@ import { Cron } from '@nestjs/schedule';
 import connection from 'src/database/connection';
 import axios from 'axios';
 const ffmpeg = require('fluent-ffmpeg');
-import fs from "fs";
+import * as fs from 'node:fs';
+import * as path from 'node:path';
 @Injectable()
 export class Automacao {
   private readonly logger = new Logger(Automacao.name);
@@ -272,6 +273,10 @@ export class Automacao {
                     if (!size || size <= 0) throw new Error("Tamanho do arquivo inválido.");
                     this.logger.debug('Tamanho do aquivo em bites',size)
                     let filePath = `/home/ubuntu/cristatusBackApp/backend/src/public/${publicao[cont].nomeArquivos}`;
+                    const abs = path.resolve(filePath);
+                    if (!fs.existsSync(abs)) {
+                        throw new Error(`Arquivo não encontrado: ${abs}`);
+                    }
                     const stat = fs.statSync(filePath);            // pega tamanho sem ler o arquivo
                     const stream = fs.createReadStream(filePath);  // STREAM, nada de Buffer
 
