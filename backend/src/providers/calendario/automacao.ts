@@ -5,6 +5,8 @@ import axios from 'axios';
 const ffmpeg = require('fluent-ffmpeg');
 import * as fs from 'node:fs';
 import * as path from 'node:path';
+import http from "http";
+import https from "https";
 @Injectable()
 export class Automacao {
   private readonly logger = new Logger(Automacao.name);
@@ -233,69 +235,144 @@ export class Automacao {
                             
                         }),
                     );
-                    
-                    this.logger.debug('📦 Container criado com sucesso:');
-                    this.logger.debug(JSON.stringify(createRes.data, null, 2));
-                    const containerId = createRes.data.id;
-                    if (!containerId) {
-                        this.logger.debug('❌ Container ID não retornado');
-                        return;
-                    };
 
+                    const httpAgent = new http.Agent({ keepAlive: true });
+                    const httpsAgent = new https.Agent({ keepAlive: true });
 
-                    /** Tenta HEAD; se falhar, usa GET com Range para obter o tamanho via Content-Range */
-                    async function getRemoteFileSize(url: string): Promise<number> {
-                        // 1) HEAD
-                        try {
-                            const r = await axios.head(url, { maxRedirects: 5, timeout: 15000 });
-                            const len = r.headers["content-length"];
-                            if (len && !isNaN(Number(len))) return Number(len);
-                        } catch {}
-
-                        // 2) GET com Range (1 byte)
-                        const r2 = await axios.get(url, {
-                            headers: { Range: "bytes=0-0" },
-                            validateStatus: s => (s >= 200 && s < 300) || s === 206,
-                            responseType: "arraybuffer",
-                            maxRedirects: 5,
-                            timeout: 20000,
+                    /** 1) Criar o container de upload (sessão) */
+                    async function createContainer(igUserId: string, accessToken: string, caption: string, shareToFeed = true) {
+                        const params = new URLSearchParams({
+                            upload_type: "resumable",
+                            media_type: "REELS",
+                            caption,
+                            share_to_feed: String(shareToFeed),
+                            access_token: accessToken,
+                            thumb_offset: "3",
                         });
-                        const cr = r2.headers["content-range"]; // ex: "bytes 0-0/1234567"
-                        if (!cr) throw new Error("Sem Content-Range; servidor não informa tamanho.");
-                        const total = cr.split("/")[1];
-                        const size = Number(total);
-                        if (!size || isNaN(size)) throw new Error("Content-Range inválido.");
-                        return size;
+
+                        const res = await axios.post(
+                            `https://graph.facebook.com/v23.0/${igUserId}/media`,
+                            params,
+                            { httpAgent, httpsAgent }
+                        );
+
+                        // A resposta deve trazer o ID do container e a URL de upload no rupload
+                        const containerId: string = res.data?.id;
+                        const uploadURL: string = res.data?.uri; // ex.: https://rupload.facebook.com/ig-api-upload/v23.0/<session-id>
+                        this.logger.debug(containerId, uploadURL);
+
+                        if (!containerId || !uploadURL) throw new Error("Container sem id/uri na resposta.");
+                            return { containerId, uploadURL };
+                        
                     };
 
-                    // 1) log do tamanho do arquivo (size)
-                    const size = await getRemoteFileSize(videoUrl);
-                    if (!size || size <= 0) throw new Error("Tamanho do arquivo inválido.");
-                    this.logger.debug('Tamanho do aquivo em bites',size)
-                    let filePath = `/home/ubuntu/cristatusBackApp/backend/src/public/${publicao[cont].nomeArquivos}`;
-                    const abs = path.resolve(filePath);
-                    if (!fs.existsSync(abs)) {
-                        throw new Error(`Arquivo não encontrado: ${abs}`);
-                    }
-                    const stat = fs.statSync(filePath);            // pega tamanho sem ler o arquivo
-                    const stream = fs.createReadStream(filePath);  // STREAM, nada de Buffer
+                    /** 2) Enviar os bytes em chunks para o rupload.facebook.com */
+                    async function uploadResumable(uploadURL: string, filePath: string) {
+                        const abs = path.resolve(filePath);
+                        if (!fs.existsSync(abs)) throw new Error(`Arquivo não encontrado: ${abs}`);
 
-                    await axios.put(`https://www.acasaprime1.com.br/image/${publicao[cont].nomeArquivos}`, stream, {
-                        headers: {
-                        "Content-Type": "application/octet-stream",
-                        "Content-Length": stat.size
-                        },
-                        maxBodyLength: Infinity,       // não limite payload
-                        maxContentLength: Infinity,    // idem
-                        // evita transformações que possam bufferizar
-                        transformRequest: [(data) => data],
-                        // conexões mais estáveis
-                        httpAgent: new (require("http").Agent)({ keepAlive: true }),
-                        httpsAgent: new (require("https").Agent)({ keepAlive: true }),
-                        timeout: 0                     // uploads grandes podem demorar
-                    }).then((response)=>{
-                        this.logger.debug('resposta do reupload.:',response)
+                        const { size: fileSize } = fs.statSync(abs);
+
+                        // tamanho de chunk (4MB costuma ir bem; ajuste se necessário)
+                        const CHUNK = 4 * 1024 * 1024;
+
+                        let offset = 0;
+                        const fd = fs.openSync(abs, "r");
+
+                        try {
+                            const buffer = Buffer.allocUnsafe(CHUNK);
+
+                            while (offset < fileSize) {
+                                const toRead = Math.min(CHUNK, fileSize - offset);
+                                fs.readSync(fd, buffer, 0, toRead, offset);
+
+                                // PUT do pedaço atual
+                                const headers = {
+                                    "Content-Type": "application/octet-stream",
+                                    "offset": String(offset),
+                                    "file_size": String(fileSize),
+                                } as const;
+
+                                const body = toRead === CHUNK ? buffer : buffer.subarray(0, toRead);
+
+                                const resp = await axios.put(uploadURL, body, {
+                                    headers,
+                                    maxBodyLength: Infinity,
+                                    maxContentLength: Infinity,
+                                    timeout: 0,
+                                    httpAgent,
+                                    httpsAgent,
+                                    validateStatus: s => s >= 200 && s < 300,
+                                });
+
+                                    // a resposta do rupload costuma devolver o novo offset
+                                    const serverOffset = Number(resp?.data?.offset ?? offset + toRead);
+                                    // se não vier, assumimos que avançou o que enviamos
+                                    offset = serverOffset;
+
+                                    // (opcional) log
+                                    // console.log(`enviado: ${offset}/${fileSize}`);
+                            }
+                        } finally {
+                            fs.closeSync(fd);
+                        }
+                    };
+
+                    /** 3) Publicar o container (torna o Reels visível) */
+                    async function publishContainer(igUserId: string, containerId: string, accessToken: string) {
+                        const params = new URLSearchParams({
+                            creation_id: containerId,
+                            access_token: accessToken,
+                        });
+
+                        const res = await axios.post(
+                            `https://graph.facebook.com/v23.0/${igUserId}/media_publish`,
+                            params,
+                            { httpAgent, httpsAgent }
+                        );
+
+                        // retorno costuma ter { id: "<media_id>" }
+                        return res.data;
+                    };
+
+                    /** 4) (opcional) Consultar status de processamento do vídeo */
+                    async function getContainerStatus(containerId: string, accessToken: string) {
+                        const res = await axios.get(
+                            `https://graph.facebook.com/v23.0/${containerId}`,
+                            {
+                            params: { fields: "status,status_code,video_status", access_token: accessToken },
+                            httpAgent, httpsAgent
+                            }
+                        );
+                        return res.data;
+                    };
+
+                /** ---- Exemplo de uso prático ---- */
+                    async function enviarReels() {
+                        const IG_USER_ID = `${horaUser[0].idInsta}`;
+                        const ACCESS_TOKEN = `${chave[0].token}`;
+                        const CAPTION = `${publicao[cont].legenda}`;
+                        const FILE_PATH = `/home/ubuntu/cristatusBackApp/backend/src/public/${publicao[cont].nomeArquivos}`;
+
+                        // 1) cria sessão
+                        const { containerId, uploadURL } = await createContainer(IG_USER_ID, ACCESS_TOKEN, CAPTION, true);
+
+                        // 2) envia bytes pro rupload (NÃO precisa upar pro seu domínio)
+                        await uploadResumable(uploadURL, FILE_PATH);
+
+                        // 3) publica
+                        const publish = await publishContainer(IG_USER_ID, containerId, ACCESS_TOKEN);
+
+                        // 4) (opcional) cheque status do container até "FINISHED"
+                        const status = await getContainerStatus(containerId, ACCESS_TOKEN);
+
+                        console.log({ publish, status });
+                    };
+                    enviarReels().catch(err => {
+                        console.error("Falha no envio/publicação:", err?.response?.data ?? err);
                     });
+
+
 
                     /*?
                     let attempts = 0;
