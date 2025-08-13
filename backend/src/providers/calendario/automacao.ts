@@ -259,6 +259,7 @@ export class Automacao {
                         // A resposta deve trazer o ID do container e a URL de upload no rupload
                         const containerId: string = res.data?.id;
                         const uploadURL: string = res.data?.uri; // ex.: https://rupload.facebook.com/ig-api-upload/v23.0/<session-id>
+                        this.logger
                         this.logger.debug(containerId, uploadURL);
 
                         if (!containerId || !uploadURL) throw new Error("Container sem id/uri na resposta.");
@@ -358,15 +359,15 @@ export class Automacao {
                         const { containerId, uploadURL } = await createContainer(IG_USER_ID, ACCESS_TOKEN, CAPTION, true);
 
                         // 2) envia bytes pro rupload (NÃO precisa upar pro seu domínio)
-                        await uploadResumable(uploadURL, FILE_PATH);
+                        //await uploadResumable(uploadURL, FILE_PATH);
 
                         // 3) publica
-                        const publish = await publishContainer(IG_USER_ID, containerId, ACCESS_TOKEN);
+                        //const publish = await publishContainer(IG_USER_ID, containerId, ACCESS_TOKEN);
 
                         // 4) (opcional) cheque status do container até "FINISHED"
-                        const status = await getContainerStatus(containerId, ACCESS_TOKEN);
+                        //const status = await getContainerStatus(containerId, ACCESS_TOKEN);
 
-                        console.log({ publish, status });
+                        //console.log({ publish, status });
                     };
                     enviarReels().catch(err => {
                         console.error("Falha no envio/publicação:", err?.response?.data ?? err);
