@@ -5,8 +5,8 @@ import axios from 'axios';
 const ffmpeg = require('fluent-ffmpeg');
 import * as fs from 'node:fs';
 import * as path from 'node:path';
-import http from "http";
-import https from "https";
+import * as http from "http";
+import * as https from "https";
 @Injectable()
 export class Automacao {
   private readonly logger = new Logger(Automacao.name);
@@ -215,7 +215,7 @@ export class Automacao {
                     //upload_type– Defina como resumable, se estiver criando uma sessão de upload retomável para um arquivo de vídeo grande
                     
                     ///cirando container
-                    let videoUrl = `https://www.acasaprime1.com.br/image/${publicao[cont].nomeArquivos}`
+                    /*let videoUrl = `https://www.acasaprime1.com.br/image/${publicao[cont].nomeArquivos}`
                     const testVideo = await axios.head(videoUrl);
                     if (testVideo.status !== 200) {
                     throw new Error('URL de vídeo inacessível');
@@ -234,7 +234,7 @@ export class Automacao {
                             thumb_offset: '3'
                             
                         }),
-                    );
+                    );*/
 
                     const httpAgent = new http.Agent({ keepAlive: true });
                     const httpsAgent = new https.Agent({ keepAlive: true });
