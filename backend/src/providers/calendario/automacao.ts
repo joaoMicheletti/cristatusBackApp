@@ -167,8 +167,8 @@ export class Automacao {
                 } else if(publicao[cont].formato === 'video'){
                     this.logger.debug('videoooooo');
                     // atualizar o campo processo no banco de dados para evitar iniciar o segundo processamenteo da publicação.
-                    let updateProcesso = await connection('calendario').where('id', publicao[cont].id).update('processo', 'processado');
-                    this.logger.debug('Campo processo Ataulizado,',updateProcesso);
+                    //let updateProcesso = await connection('calendario').where('id', publicao[cont].id).update('processo', 'processado');
+                    //this.logger.debug('Campo processo Ataulizado,',updateProcesso);
                     // antes de crair o container vamos processar o video.
                     this.logger.debug('aqui é o processod e publição de video!')
                     async function corrigirVideo(inputPath: string, outputPath: string): Promise<void> {
@@ -178,31 +178,25 @@ export class Automacao {
                         }
 
                         return new Promise((resolve, reject) => {
-                            this.logger.debug('iniciado o processo de processamento do Video ', inputPath);
                             ffmpeg(inputPath)
                             .videoCodec('libx264')
-                            .audioCodec('aac')
-                            .audioChannels(2)
-                            .audioFrequency(44100)
-                            this.logger.debug('meio do processo do Video ')
-                            .audioBitrate('128k')
                             .outputOptions([
+                                '-r 30',                  // FPS fixo
+                                '-g 60',                  // GOP
                                 '-pix_fmt yuv420p',
+                                '-profile:v high',
+                                '-level 4.1',
                                 '-b:v 8000k',
                                 '-maxrate 8500k',
                                 '-bufsize 10000k',
                                 '-movflags +faststart',
-                                '-vf', 'scale=1080:1920:force_original_aspect_ratio=decrease,pad=1080:1920:(ow-iw)/2:(oh-ih)/2'
+                                '-vf',
+                                'scale=1080:1920:force_original_aspect_ratio=decrease,pad=1080:1920:(ow-iw)/2:(oh-ih)/2'
                             ])
-                            this.logger.debug('final do processo do video ')
-                            .on('end', () => {
-                                this.logger.debug('Finalizado com sucesso:', outputPath);
-                                resolve();
-                            })
-                            .on('error', err => {
-                                this.logger.debug('Erro ao processar vídeo:', err);
-                                reject(new Error('Erro ao processar vídeo: ' + err.message));
-                            })
+                            .audioCodec('aac')
+                            .audioChannels(2)
+                            .audioFrequency(44100)
+                            .audioBitrate('128k')
                             .save(outputPath);
                         });
                     }
