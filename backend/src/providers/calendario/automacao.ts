@@ -193,7 +193,7 @@ export class Automacao {
                                 '-vf', 'scale=1080:1920:force_original_aspect_ratio=decrease,pad=1080:1920:(ow-iw)/2:(oh-ih)/2'
                             ])
                             .on('end', () => {
-                                console.log('Finalizado com sucesso:', outputPath);
+                                this.logger.debug('Finalizado com sucesso:', outputPath);
                                 resolve();
                             })
                             .on('error', err => {
