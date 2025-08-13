@@ -357,13 +357,13 @@ export class Automacao {
                         const { containerId, uploadURL } = await createContainer(IG_USER_ID, ACCESS_TOKEN, CAPTION, true);
 
                         // 2) envia bytes pro rupload (NÃO precisa upar pro seu domínio)
-                        //await uploadResumable(uploadURL, FILE_PATH);
+                        await uploadResumable(uploadURL, FILE_PATH);
 
                         // 3) publica
-                        //const publish = await publishContainer(IG_USER_ID, containerId, ACCESS_TOKEN);
+                        const publish = await publishContainer(IG_USER_ID, containerId, ACCESS_TOKEN);
 
                         // 4) (opcional) cheque status do container até "FINISHED"
-                        //const status = await getContainerStatus(containerId, ACCESS_TOKEN);
+                        const status = await getContainerStatus(containerId, ACCESS_TOKEN);
 
                         //console.log({ publish, status });
                     };
