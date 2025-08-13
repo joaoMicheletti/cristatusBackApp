@@ -178,11 +178,13 @@ export class Automacao {
                         }
 
                         return new Promise((resolve, reject) => {
+                            this.logger.debug('iniciado o processo de processamento do Video ', inputPath);
                             ffmpeg(inputPath)
                             .videoCodec('libx264')
                             .audioCodec('aac')
                             .audioChannels(2)
                             .audioFrequency(44100)
+                            this.logger.debug('meio do processo do Video ')
                             .audioBitrate('128k')
                             .outputOptions([
                                 '-pix_fmt yuv420p',
@@ -192,6 +194,7 @@ export class Automacao {
                                 '-movflags +faststart',
                                 '-vf', 'scale=1080:1920:force_original_aspect_ratio=decrease,pad=1080:1920:(ow-iw)/2:(oh-ih)/2'
                             ])
+                            this.logger.debug('final do processo do video ')
                             .on('end', () => {
                                 this.logger.debug('Finalizado com sucesso:', outputPath);
                                 resolve();
