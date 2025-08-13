@@ -171,7 +171,7 @@ export class Automacao {
                     this.logger.debug('Campo processo Ataulizado,',updateProcesso);
                     // antes de crair o container vamos processar o video.
                     this.logger.debug('aqui é o processod e publição de video!')
-                    /*?async function corrigirVideo(inputPath: string, outputPath: string): Promise<void> {
+                    async function corrigirVideo(inputPath: string, outputPath: string): Promise<void> {
                         console.log('Processando vídeo:', inputPath);
                         if (!inputPath || !outputPath) {
                             throw new Error('Caminhos de input ou output estão indefinidos!');
@@ -209,13 +209,11 @@ export class Automacao {
                     await corrigirVideo(
                         `src/public/${publicao[cont].nomeArquivos}`,
                         `src/public/processed-${publicao[cont].nomeArquivos}`
-                    );/** */
+                    );
 
-                    //testar com calma a publçicação de videos com o facebbok 
-                    //upload_type– Defina como resumable, se estiver criando uma sessão de upload retomável para um arquivo de vídeo grande
                     
                     ///cirando container
-                    /*let videoUrl = `https://www.acasaprime1.com.br/image/${publicao[cont].nomeArquivos}`
+                    let videoUrl = `https://www.acasaprime1.com.br/image/${publicao[cont].nomeArquivos}`
                     const testVideo = await axios.head(videoUrl);
                     if (testVideo.status !== 200) {
                     throw new Error('URL de vídeo inacessível');
@@ -227,154 +225,19 @@ export class Automacao {
                         new URLSearchParams({
                             upload_type: 'resumable',
                             media_type: 'REELS',
-                            video_url: `https://www.acasaprime1.com.br/image/${publicao[cont].nomeArquivos}`,
+                            video_url: `https://www.acasaprime1.com.br/image/processed-${publicao[cont].nomeArquivos}`,
                             share_to_feed: 'true',
                             caption: publicao[cont].legenda,
                             access_token: chave[0].token,
                             thumb_offset: '3'
                             
                         }),
-                    );*/
-
-                    const httpAgent = new http.Agent({ keepAlive: true });
-                    const httpsAgent = new https.Agent({ keepAlive: true });
-
-                    /** 1) Criar o container de upload (sessão) */
-                    async function createContainer(igUserId: string, accessToken: string, caption: string, shareToFeed = true) {
-                        const params = new URLSearchParams({
-                            upload_type: "resumable",
-                            media_type: "REELS",
-                            caption,
-                            share_to_feed: String(shareToFeed),
-                            access_token: accessToken,
-                            thumb_offset: "3",
-                        });
-
-                        const res = await axios.post(
-                            `https://graph.facebook.com/v23.0/${igUserId}/media`,
-                            params,
-                            { httpAgent, httpsAgent }
-                        );
-
-                        // A resposta deve trazer o ID do container e a URL de upload no rupload
-                        const containerId: string = res.data?.id;
-                        const uploadURL: string = res.data?.uri; // ex.: https://rupload.facebook.com/ig-api-upload/v23.0/<session-id>
-
-                        if (!containerId || !uploadURL) throw new Error("Container sem id/uri na resposta.");
-                            return { containerId, uploadURL };
-                        
-                    };
-
-                    /** 2) Enviar os bytes em chunks para o rupload.facebook.com */
-                    async function uploadResumable(uploadURL: string, filePath: string) {
-                        const abs = path.resolve(filePath);
-                        if (!fs.existsSync(abs)) throw new Error(`Arquivo não encontrado: ${abs}`);
-
-                        const { size: fileSize } = fs.statSync(abs);
-
-                        // tamanho de chunk (4MB costuma ir bem; ajuste se necessário)
-                        const CHUNK = 4 * 1024 * 1024;
-
-                        let offset = 0;
-                        const fd = fs.openSync(abs, "r");
-
-                        try {
-                            const buffer = Buffer.allocUnsafe(CHUNK);
-
-                            while (offset < fileSize) {
-                                const toRead = Math.min(CHUNK, fileSize - offset);
-                                fs.readSync(fd, buffer, 0, toRead, offset);
-
-                                // PUT do pedaço atual
-                                const headers = {
-                                    "Content-Type": "application/octet-stream",
-                                    "offset": String(offset),
-                                    "file_size": String(fileSize),
-                                } as const;
-
-                                const body = toRead === CHUNK ? buffer : buffer.subarray(0, toRead);
-
-                                const resp = await axios.put(uploadURL, body, {
-                                    headers,
-                                    maxBodyLength: Infinity,
-                                    maxContentLength: Infinity,
-                                    timeout: 0,
-                                    httpAgent,
-                                    httpsAgent,
-                                    validateStatus: s => s >= 200 && s < 300,
-                                });
-
-                                    // a resposta do rupload costuma devolver o novo offset
-                                    const serverOffset = Number(resp?.data?.offset ?? offset + toRead);
-                                    // se não vier, assumimos que avançou o que enviamos
-                                    offset = serverOffset;
-
-                                    // (opcional) log
-                                    // console.log(`enviado: ${offset}/${fileSize}`);
-                            }
-                        } finally {
-                            fs.closeSync(fd);
-                        }
-                    };
-
-                    /** 3) Publicar o container (torna o Reels visível) */
-                    async function publishContainer(igUserId: string, containerId: string, accessToken: string) {
-                        const params = new URLSearchParams({
-                            creation_id: containerId,
-                            access_token: accessToken,
-                        });
-
-                        const res = await axios.post(
-                            `https://graph.facebook.com/v23.0/${igUserId}/media_publish`,
-                            params,
-                            { httpAgent, httpsAgent }
-                        );
-
-                        // retorno costuma ter { id: "<media_id>" }
-                        return res.data;
-                    };
-
-                    /** 4) (opcional) Consultar status de processamento do vídeo */
-                    async function getContainerStatus(containerId: string, accessToken: string) {
-                        const res = await axios.get(
-                            `https://graph.facebook.com/v23.0/${containerId}`,
-                            {
-                            params: { fields: "status,status_code,video_status", access_token: accessToken },
-                            httpAgent, httpsAgent
-                            }
-                        );
-                        return res.data;
-                    };
-
-                /** ---- Exemplo de uso prático ---- */
-                    async function enviarReels() {
-                        const IG_USER_ID = `${horaUser[0].idInsta}`;
-                        const ACCESS_TOKEN = `${chave[0].token}`;
-                        const CAPTION = `${publicao[cont].legenda}`;
-                        const FILE_PATH = `/home/ubuntu/cristatusBackApp/backend/src/public/${publicao[cont].nomeArquivos}`;
-
-                        // 1) cria sessão
-                        const { containerId, uploadURL } = await createContainer(IG_USER_ID, ACCESS_TOKEN, CAPTION, true);
-
-                        // 2) envia bytes pro rupload (NÃO precisa upar pro seu domínio)
-                        await uploadResumable(uploadURL, FILE_PATH);
-
-                        // 3) publica
-                        const publish = await publishContainer(IG_USER_ID, containerId, ACCESS_TOKEN);
-
-                        // 4) (opcional) cheque status do container até "FINISHED"
-                        const status = await getContainerStatus(containerId, ACCESS_TOKEN);
-
-                        //console.log({ publish, status });
-                    };
-                    enviarReels().catch(err => {
-                        console.error("Falha no envio/publicação:", err?.response?.data ?? err);
-                    });
+                    );
+                    this.logger.debug('Create Container Reels',createRes)
 
 
-
-                    /*?
-                    let attempts = 0;
+                    
+                    /*let attempts = 0;
                     while (attempts < 20) {
                         this.logger.debug(`Lopinkg, ${attempts}`)
                         const statusRes = await axios.get(`https://graph.facebook.com/v23.0/${containerId}`, {
@@ -393,7 +256,7 @@ export class Automacao {
                         await new Promise(r => setTimeout(r, 5000)); // espera 5s
                         attempts++;
                     }
-                    /*
+
                     let C = 0;
                     while(C === 0){
                         const statusRes = await axios.get(
@@ -438,8 +301,8 @@ export class Automacao {
                             access_token: chave[0].token,
                         }),
                     );
-                    this.logger.debug(publishRes);
-                    */
+                    this.logger.debug(publishRes);*/
+                
                 }
             }
         }
