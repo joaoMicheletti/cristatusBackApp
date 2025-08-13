@@ -259,7 +259,6 @@ export class Automacao {
                         // A resposta deve trazer o ID do container e a URL de upload no rupload
                         const containerId: string = res.data?.id;
                         const uploadURL: string = res.data?.uri; // ex.: https://rupload.facebook.com/ig-api-upload/v23.0/<session-id>
-                        this.logger.debug(containerId, uploadURL);
 
                         if (!containerId || !uploadURL) throw new Error("Container sem id/uri na resposta.");
                             return { containerId, uploadURL };
