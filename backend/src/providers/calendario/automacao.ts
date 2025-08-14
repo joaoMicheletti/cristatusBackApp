@@ -279,8 +279,7 @@ export class Automacao {
                         });
                         this.logger.debug('acompanhamento do status do container', statusRes.data);
 
-                        if (statusRes.data.status_code === 'FINISHED'){
-                            
+                        if (statusRes.data.status_code === 'Finished: Media has been uploaded and it is ready to be published.'){
                             this.logger.debug('Finished')
                             Verification += 1;
                             break;
