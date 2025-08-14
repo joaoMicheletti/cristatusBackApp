@@ -171,17 +171,26 @@ export class Automacao {
                     // antes de crair o container vamos processar o video.
                     this.logger.debug('aqui é o processod e publição de video!')
                     async function corrigirVideo(inputPath: string, outputPath: string): Promise<void> {
-                        console.log('Processando vídeo:', inputPath);
                         if (!inputPath || !outputPath) {
                             throw new Error('Caminhos de input ou output estão indefinidos!');
                         }
 
+                        // timeout de segurança (ex.: 10 minutos)
+                        const TIMEOUT_MS = 10 * 60 * 1000;
+                        let finished = false;
+
                         return new Promise((resolve, reject) => {
+                            const timer = setTimeout(() => {
+                            if (!finished) {
+                                reject(new Error('FFmpeg timeout ao processar o vídeo.'));
+                            }
+                            }, TIMEOUT_MS);
+
                             ffmpeg(inputPath)
                             .videoCodec('libx264')
                             .outputOptions([
-                                '-r 30',                  // FPS fixo
-                                '-g 60',                  // GOP
+                                '-r 30',                    // FPS fixo (30 é mais seguro)
+                                '-g 60',                    // GOP ~2s
                                 '-pix_fmt yuv420p',
                                 '-profile:v high',
                                 '-level 4.1',
@@ -196,9 +205,23 @@ export class Automacao {
                             .audioChannels(2)
                             .audioFrequency(44100)
                             .audioBitrate('128k')
+                            .on('progress', p => {
+                                // opcional: logar progresso
+                                // console.log(`ffmpeg: ${p.frames} frames`);
+                            })
+                            .on('end', () => {
+                                finished = true;
+                                clearTimeout(timer);
+                                resolve();
+                            })
+                            .on('error', (err) => {
+                                finished = true;
+                                clearTimeout(timer);
+                                reject(err);
+                            })
                             .save(outputPath);
                         });
-                    }
+                        }
                     
                     // chamando a função para corrigir o video.
                     this.logger.debug('processando o Vídeo...');
