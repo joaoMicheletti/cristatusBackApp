@@ -268,9 +268,9 @@ export class Automacao {
                     );
                     this.logger.debug('Create Container Reels',createRes)
 
-
-                    // verificando a disponibilidade do container 
-                    /*let attempts = 0;
+                    let containerId = createRes.data.id;
+                    // verificando a disponibilidade do container
+                    let attempts = 0; 
                     while (attempts < 20) {
                         this.logger.debug(`Lopinkg, ${attempts}`)
                         const statusRes = await axios.get(`https://graph.facebook.com/v23.0/${containerId}`, {
@@ -335,7 +335,7 @@ export class Automacao {
                             access_token: chave[0].token,
                         }),
                     );
-                    this.logger.debug(publishRes);*/
+                    this.logger.debug(publishRes);
                 
                 }
             }
