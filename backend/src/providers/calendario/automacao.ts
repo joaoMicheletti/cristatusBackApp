@@ -209,14 +209,24 @@ export class Automacao {
                     );
 
                     
-                    ///cirando container
-                    let videoUrl = `https://www.acasaprime1.com.br/image/${publicao[cont].nomeArquivos}`
-                    const testVideo = await axios.head(videoUrl);
-                    if (testVideo.status !== 200) {
-                    throw new Error('URL de vídeo inacessível');
-                    }   
-                    this.logger.debug(`resposta da URL do Videos`,testVideo.status)
+                    // veirificando a disponibilidsade do video.
+                    let negativa = 0;
+                    while(true){
+                        let videoUrl = `https://www.acasaprime1.com.br/image/processed-${publicao[cont].nomeArquivos}`
+                        const testVideo = await axios.head(videoUrl);
+                        if (testVideo.status !== 200) {
+                            negativa += 1;
+                            throw new Error(`URL de vídeo inacessível:${negativa}`);
+                        } else {
+                            this.logger.debug(`resposta da requisição onde verificamos a integridade do video:`,testVideo.status);
+                            await new Promise(r => setTimeout(r, 60000)); // espera 1 minuto;
+                            break;
+                        }
+                    }
+                       
                     
+                    
+                    //cirando container
                     const createRes = await axios.post(
                         `https://graph.facebook.com/v23.0/${horaUser[0].idInsta}/media` ,
                         new URLSearchParams({
@@ -233,7 +243,7 @@ export class Automacao {
                     this.logger.debug('Create Container Reels',createRes)
 
 
-                    
+                    // verificando a disponibilidade do container 
                     /*let attempts = 0;
                     while (attempts < 20) {
                         this.logger.debug(`Lopinkg, ${attempts}`)
@@ -250,10 +260,11 @@ export class Automacao {
                             throw new Error('Erro no vídeo');
 
                         } 
-                        await new Promise(r => setTimeout(r, 5000)); // espera 5s
+                        await new Promise(r => setTimeout(r, 1000)); // espera 10s
                         attempts++;
-                    }
+                    };
 
+                    
                     let C = 0;
                     while(C === 0){
                         const statusRes = await axios.get(
