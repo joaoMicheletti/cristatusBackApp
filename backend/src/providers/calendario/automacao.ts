@@ -256,7 +256,6 @@ export class Automacao {
                     const createRes = await axios.post(
                         `https://graph.facebook.com/v23.0/${horaUser[0].idInsta}/media` ,
                         new URLSearchParams({
-                            upload_type: 'resumable',
                             media_type: 'REELS',
                             video_url: `https://www.acasaprime1.com.br/image/processed-${publicao[cont].nomeArquivos}`,
                             share_to_feed: 'true',
@@ -278,6 +277,7 @@ export class Automacao {
                         const statusRes = await axios.get(`https://graph.facebook.com/v23.0/${containerId}`, {
                             params: { fields: 'status', access_token: chave[0].token }
                         });
+                        this.logger.debug('acompanhamento do status do container', statusRes.data);
 
                         if (statusRes.data.status === 'FINISHED'){
                             this.logger.debug('Finished')
