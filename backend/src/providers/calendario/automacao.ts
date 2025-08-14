@@ -236,7 +236,7 @@ export class Automacao {
 
                     
                     // veirificando a disponibilidsade do video.
-                    let negativa = 0;
+                    /*let negativa = 0;
                     while(true){
                         let videoUrl = `https://www.acasaprime1.com.br/image/processed-${publicao[cont].nomeArquivos}`
                         const testVideo = await axios.head(videoUrl);
@@ -248,7 +248,7 @@ export class Automacao {
                             await new Promise(r => setTimeout(r, 60000)); // espera 1 minuto;
                             break;
                         }
-                    }
+                    }*/
                        
                     
                     
@@ -266,64 +266,48 @@ export class Automacao {
                             
                         }),
                     );
-                    this.logger.debug('Create Container Reels',createRes)
+                    this.logger.debug('Create Container Reels',createRes.data.id)
 
                     let containerId = createRes.data.id;
                     // verificando a disponibilidade do container
-                    let attempts = 0; 
-                    while (attempts < 20) {
-                        this.logger.debug(`Lopinkg, ${attempts}`)
+                    let Verification = 0;
+                    let n = 3;
+                    while (true) {
+                        this.logger.debug(`Verificando o status da criação do container`);
+                        await new Promise(r => setTimeout(r, 60000 * n)); // espera 2 minutos para verificar o status da CRiação do Container 
                         const statusRes = await axios.get(`https://graph.facebook.com/v23.0/${containerId}`, {
                             params: { fields: 'status', access_token: chave[0].token }
                         });
 
                         if (statusRes.data.status === 'FINISHED'){
                             this.logger.debug('Finished')
+                            Verification += 1;
                             break;
                         } 
                         if (statusRes.data.status === 'ERROR'){
-                            this.logger.debug('erro ao processar video')
-                            throw new Error('Erro no vídeo');
-
-                        } 
-                        await new Promise(r => setTimeout(r, 1000)); // espera 10s
-                        attempts++;
-                    };
-
-                    
-                    let C = 0;
-                    while(C === 0){
-                        const statusRes = await axios.get(
-                        `https://graph.facebook.com/v23.0/${containerId}`,
-                        {
-                            params: {
-                            fields: 'status',
+                            let updateProcesso = await connection('calendario').where('id', publicao[cont].id).update('processo', null);
+                            // enviar notificação do erro ao procesar video aos sociais medias e gestor de projetos.
+                            this.logger.debug('erro ao processar video');
+                        };
+                    };                    
+                    // publicação de Reels :
+                    if(Verification > 0){
+                        let publication = await axios.post(
+                        `https://graph.facebook.com/v23.0/${horaUser[0].idInsta}/media_publish`,
+                        new URLSearchParams({
+                            creation_id: containerId,
                             access_token: chave[0].token
-                            }
-                        }
+                        }),
+                        { headers: { 'Content-Type': 'application/x-www-form-urlencoded' } }
                         );
-                        this.logger.debug(statusRes.data.status)
-                        if(statusRes.data.status ==='In Progress: Media is still being processed.'){
-                            C+=0
-                        }else{
-                            C +=1;
-                        }
-
-                    }
+                        this.logger.debug(publication);
+                    }else {
+                        this.logger.debug('O material noa pode ser publicado');
+                    };
                     
-                    
-                    let publication = await axios.post(
-                    `https://graph.facebook.com/v23.0/${horaUser[0].idInsta}/media_publish`,
-                    new URLSearchParams({
-                        creation_id: containerId,
-                        access_token: chave[0].token
-                    }),
-                    { headers: { 'Content-Type': 'application/x-www-form-urlencoded' } }
-                    );
-                    this.logger.debug(publication)
 
                     
-                    // 2. Esperar processamento (Instagram recomenda 30s~60s)
+                    /*/ 2. Esperar processamento (Instagram recomenda 30s~60s)
                     this.logger.debug('⏳ Aguardando 60 segundos para o processamento do vídeo...');
                     await new Promise((resolve) => setTimeout(resolve, 30000));
 
@@ -336,7 +320,7 @@ export class Automacao {
                         }),
                     );
                     this.logger.debug(publishRes);
-                
+                    */                
                 }
             }
         }
