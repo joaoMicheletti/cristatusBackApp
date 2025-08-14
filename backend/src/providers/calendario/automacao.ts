@@ -11,8 +11,7 @@ import * as https from "https";
 export class Automacao {
   private readonly logger = new Logger(Automacao.name);
  //@Cron('0 */5 * * * *')  async handleCron() {
-@Cron('10 * * * * *')  async handleCron() {
-    
+@Cron('0 */3 * * * *') async handleCron() {
     const data = new Date();
     const dia = data.getDate();// dia
     const mes = data.getMonth() + 1;//mes ssomar com +1 para deichar a foramtação correata
@@ -167,8 +166,8 @@ export class Automacao {
                 } else if(publicao[cont].formato === 'video'){
                     this.logger.debug('videoooooo');
                     // atualizar o campo processo no banco de dados para evitar iniciar o segundo processamenteo da publicação.
-                    //let updateProcesso = await connection('calendario').where('id', publicao[cont].id).update('processo', 'processado');
-                    //this.logger.debug('Campo processo Ataulizado,',updateProcesso);
+                    let updateProcesso = await connection('calendario').where('id', publicao[cont].id).update('processo', 'processado');
+                    this.logger.debug('Campo processo Ataulizado,',updateProcesso);
                     // antes de crair o container vamos processar o video.
                     this.logger.debug('aqui é o processod e publição de video!')
                     async function corrigirVideo(inputPath: string, outputPath: string): Promise<void> {
@@ -201,12 +200,16 @@ export class Automacao {
                         });
                     }
                     
-
+                    // chamando a função para corrigir o video.
                     this.logger.debug('processando o Vídeo...');
                     await corrigirVideo(
                         `src/public/${publicao[cont].nomeArquivos}`,
                         `src/public/processed-${publicao[cont].nomeArquivos}`
                     );
+                    
+
+                    //log para mostrar que ja finalizou o processo de correeção do video.
+                    this.logger.debug('processo de correção do video finalizado, verificando disponibilidade do video!')
 
                     
                     // veirificando a disponibilidsade do video.
