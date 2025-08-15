@@ -211,12 +211,19 @@ export class Automacao {
                             };
                             // chamando a função para corrigir o video.
                             this.logger.debug('processando o Vídeo para o container filho...');
-                            await corrigirVideo(
+                            /*await corrigirVideo(
                                 `src/public/${listaLimpa[contLista]}`,
                                 `src/public/processed-${listaLimpa[contLista]}`
-                            );
+                            );*/
                             //processamos o video, vamos aguardar 1 minutos para que a versçao processada esteja disponivel.
-                            await new Promise(r => setTimeout(r, 60000 * 1));
+                            const params = new URLSearchParams();
+                            params.set('is_carousel_item', 'true');
+                            params.set('video_url', `https://www.acasaprime1.com.br/image/${encodeURIComponent(listaLimpa[contLista])}`);
+                            params.set('access_token', chave[0].token);
+
+                            // debug: veja o corpo EXATAMENTE como será enviado
+                            console.log('FORM =>', params.toString());
+                           // await new Promise(r => setTimeout(r, 60000 * 1));
                             // criar o container com o video processado:
                             console.log(`https://www.acasaprime1.com.br/image/processed-${listaLimpa[contLista]}`)
                             const createRes = await axios.post(
