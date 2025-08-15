@@ -277,7 +277,7 @@ export class Automacao {
                             const isTransient = e?.response?.status >= 500 || err?.is_transient || err?.code === 2;
                             if (attempt < 5 && isTransient) {
                                 const backoff = 1000 * Math.pow(2, attempt) + Math.floor(Math.random() * 300);
-                                this.logger.warn(`Transient ao criar carrossel (tentativa ${attempt}). Retentando em ${backoff}ms…`);
+                                console.log(`Transient ao criar carrossel (tentativa ${attempt}). Retentando em ${backoff}ms…`);
                                 await delay(backoff);
                                 continue;
                             }
