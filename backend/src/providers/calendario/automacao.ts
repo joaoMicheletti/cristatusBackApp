@@ -210,8 +210,8 @@ export class Automacao {
                             // chamando a função para corrigir o video.
                             this.logger.debug('processando o Vídeo para o container filho...');
                             await corrigirVideo(
-                                `src/public/${publicao[cont].nomeArquivos}`,
-                                `src/public/processed-${publicao[cont].nomeArquivos}`
+                                `src/public/${listaLimpa[contLista]}`,
+                                `src/public/processed-${listaLimpa[contLista]}`
                             );
                             //processamos o video, vamos aguardar 2 minutos para que a versçao processada esteja disponivel.
                             await new Promise(r => setTimeout(r, 60000 * 2));
@@ -220,7 +220,7 @@ export class Automacao {
                                 `https://graph.facebook.com/v23.0/${horaUser[0].idInsta}/media` ,
                                 new URLSearchParams({
                                     is_carousel_item: 'true',
-                                    video_url: `https://www.acasaprime1.com.br/image/processed-${publicao[cont].nomeArquivos}`,
+                                    video_url: `https://www.acasaprime1.com.br/image/processed-${listaLimpa[contLista]}`,
                                     share_to_feed: 'true',
                                     access_token: chave[0].token,                                    
                                 }),
