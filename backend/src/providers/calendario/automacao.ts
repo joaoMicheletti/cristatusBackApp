@@ -157,7 +157,7 @@ export class Automacao {
                         if(listaLimpa[contLista].includes('.mp4')){
                             // criando container de video filho para um carossel.
                             // processando video, vamos garantir que ele esteja nos padroes aceitaveis.
-                            /*async function corrigirVideo(inputPath: string, outputPath: string): Promise<void> {
+                            async function corrigirVideo(inputPath: string, outputPath: string): Promise<void> {
                                 if (!inputPath || !outputPath) {
                                     throw new Error('Caminhos de input ou output estão indefinidos!');
                                 }
@@ -214,30 +214,25 @@ export class Automacao {
                             await corrigirVideo(
                                 `src/public/${listaLimpa[contLista]}`,
                                 `src/public/processed-${listaLimpa[contLista]}`
-                            );*/
+                            );
                             //processamos o video, vamos aguardar 1 minutos para que a versçao processada esteja disponivel.
                             const params = new URLSearchParams();
                             params.set('is_carousel_item', 'true');
-                            params.set('video_url', `https://www.acasaprime1.com.br/image/${encodeURIComponent(listaLimpa[contLista])}`);
+                            params.set('video_url', `https://www.acasaprime1.com.br/image/processed-${encodeURIComponent(listaLimpa[contLista])}`);
                             params.set('access_token', chave[0].token);
-
                             // debug: veja o corpo EXATAMENTE como será enviado
                             console.log('FORM =>', params.toString());
-                           // await new Promise(r => setTimeout(r, 60000 * 1));
+                            await new Promise(r => setTimeout(r, 60000 * 1));
                             // criar o container com o video processado:
-                            /*console.log(`https://www.acasaprime1.com.br/image/processed-${listaLimpa[contLista]}`)
+                            console.log(`https://www.acasaprime1.com.br/image/processed-${listaLimpa[contLista]}`)
                             const createRes = await axios.post(
                                 `https://graph.facebook.com/v23.0/${horaUser[0].idInsta}/media`,
-                                new URLSearchParams({
-                                    is_carousel_item: 'true',
-                                    video_url: `https://www.acasaprime1.com.br/image/processed-${encodeURIComponent(listaLimpa[contLista])}`,
-                                    access_token: chave[0].token,
-                                }),
+                                params.toString(), // <-- manda a string explicitamente
                                 { headers: { 'Content-Type': 'application/x-www-form-urlencoded' } }
                             );
                             this.logger.debug('Create Container filho video carrossel',createRes.data.id)
                             childIds.push(createRes.data.id);
-                            /*/
+                            
                             contLista +=1;
                         } else {
                             // chegando aqui criaremos o container como uma imagem.
