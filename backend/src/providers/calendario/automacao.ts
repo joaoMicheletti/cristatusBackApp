@@ -138,6 +138,8 @@ export class Automacao {
                 this.logger.debug('criar container')
                 // verificar o formato da publicação
                 if(publicao[cont].formato === 'carrossel'){
+                    let updateProcesso = await connection('calendario').where('id', publicao[cont].id).update('processo', 'processado');
+                    this.logger.debug('Campo processo Ataulizado,',updateProcesso);
                     // efetuar publicação no formato de carrossel
                     // separar o nome dos arquivos, no campo Nome arquivos.
                     let nomeArquivos = publicao[cont].nomeArquivos;
@@ -250,6 +252,8 @@ export class Automacao {
                 } else if(publicao[cont].formato === 'estatico') {
                     this.logger.debug('estaticoooo')
                     this.logger.debug(horaUser[0]);
+                    let updateProcesso = await connection('calendario').where('id', publicao[cont].id).update('processo', 'processado');
+                    this.logger.debug('Campo processo Ataulizado,',updateProcesso);
                     // efetuar a criação do container 
                     let url: string = `https://graph.facebook.com/v23.0/${horaUser[0].idInsta}/media?image_url=https://www.acasaprime1.com.br/image/${publicao[cont].nomeArquivos}&caption=${encodeURIComponent(publicao[cont].legenda)}&access_token=${chave[0].token}`
                     this.logger.debug(url)
