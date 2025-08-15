@@ -300,6 +300,41 @@ export class Automacao {
                     };
                     this.logger.debug('lista de containers criado', childIds.toString());
                     // chegamos aqui, então foi criado todos os containers.
+                    // criando container pai do carossel:
+                    const createPai = await axios.post(
+                        `https://graph.facebook.com/v23.0/${horaUser[0].idInsta}/media`,
+                        new URLSearchParams({
+                            "media_type":"CARROSSEL",
+                            'caption':`${publicao[cont].legenda}`,
+                            "share_to_feed": 'true',
+                            "children": `${childIds.toString()}`,
+                            access_token: chave[0].token,
+                        }), {
+                            headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
+                        }
+                    );
+                    let Verification = 0;
+                    while (true) {
+                        this.logger.debug(`loop - + timer 1 M - Verificando o status da criação do container (Pai)`);
+                        await new Promise(r => setTimeout(r, 60000)); // espera 3 minutos para verificar o status da CRiação do Container 
+                        const statusRes = await axios.get(`https://graph.facebook.com/v23.0/${createPai.data.id}`, {
+                            params: { fields: 'status', access_token: chave[0].token }
+                        });
+                        this.logger.debug('acompanhamento do status do container', statusRes.data);
+
+                        if (statusRes.data.status === 'Finished: Media has been uploaded and it is ready to be published.'){
+                            this.logger.debug('Finished')
+                            Verification += 1;
+                            break;
+                        } 
+                        if (statusRes.data.status === 'ERROR'){
+                            let updateProcesso = await connection('calendario').where('id', publicao[cont].id).update('processo', null);
+                            // enviar notificação do erro ao procesar video aos sociais medias e gestor de projetos.
+                            this.logger.debug('erro ao processar video');
+                        };
+                    };
+                    // se der bom publicar o container com o carrossel pronto para ser publicado.
+
         
 
 
