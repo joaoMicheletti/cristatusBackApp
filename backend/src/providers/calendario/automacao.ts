@@ -215,16 +215,17 @@ export class Automacao {
                                 `src/public/${listaLimpa[contLista]}`,
                                 `src/public/processed-${listaLimpa[contLista]}`
                             );
-                            //processamos o video, vamos aguardar 2 minutos para que a versçao processada esteja disponivel.
-                            await new Promise(r => setTimeout(r, 60000 * 2));
+                            //processamos o video, vamos aguardar 1 minutos para que a versçao processada esteja disponivel.
+                            await new Promise(r => setTimeout(r, 60000 * 1));
                             // criar o container com o video processado:
                             const createRes = await axios.post(
-                                `https://graph.facebook.com/v23.0/${horaUser[0].idInsta}/media` ,
+                                `https://graph.facebook.com/v23.0/${horaUser[0].idInsta}/media`,
                                 new URLSearchParams({
                                     is_carousel_item: 'true',
                                     video_url: `https://www.acasaprime1.com.br/image/processed-${listaLimpa[contLista]}`,
-                                    access_token: chave[0].token,                                    
+                                    access_token: chave[0].token,
                                 }),
+                                { headers: { 'Content-Type': 'application/x-www-form-urlencoded' } }
                             );
                             this.logger.debug('Create Container filho video carrossel',createRes.data.id)
                             childIds.push(createRes.data.id);
