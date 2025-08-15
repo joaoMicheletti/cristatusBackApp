@@ -3,15 +3,12 @@ import { Cron } from '@nestjs/schedule';
 import connection from 'src/database/connection';
 import axios from 'axios';
 const ffmpeg = require('fluent-ffmpeg');
-import * as fs from 'node:fs';
-import * as path from 'node:path';
-import * as http from "http";
-import * as https from "https";
 @Injectable()
 export class Automacao {
   private readonly logger = new Logger(Automacao.name);
  //@Cron('0 */5 * * * *')  async handleCron() {
-@Cron('0 */3 * * * *') async handleCron() {
+//@Cron('0 */3 * * * *') async handleCron() {
+@Cron('10 * * * * *') async handleCron() {
     const data = new Date();
     const dia = data.getDate();// dia
     const mes = data.getMonth() + 1;//mes ssomar com +1 para deichar a foramtação correata
@@ -142,6 +139,13 @@ export class Automacao {
                 // verificar o formato da publicação
                 if(publicao[cont].formato === 'carrossel'){
                     // efetuar publicação no formato de carrossel
+                    // separar o nome dos arquivos, no campo Nome arquivos.
+                    let nomeArquivos = publicao[cont].nomeArquivos;
+                    // removendo caracteres:
+                    let removeCaracteres = nomeArquivos.replace(/[\[\]"\/\\]/g, '');
+                    // separando o nome dos arquivos Por (,);
+                    let listaLimpa = removeCaracteres.split(',');
+                    console.log(listaLimpa);
                 } else if(publicao[cont].formato === 'estatico') {
                     this.logger.debug('estaticoooo')
                     this.logger.debug(horaUser[0]);
@@ -259,7 +263,7 @@ export class Automacao {
                             media_type: 'REELS',
                             video_url: `https://www.acasaprime1.com.br/image/processed-${publicao[cont].nomeArquivos}`,
                             share_to_feed: 'true',
-                            caption: publicao[cont].legenda,
+                            caption: `${encodeURIComponent(publicao[cont].legenda)}`,
                             access_token: chave[0].token,
                             thumb_offset: '3'
                             
@@ -303,27 +307,10 @@ export class Automacao {
                         this.logger.debug(publication);
                     }else {
                         this.logger.debug('O material noa pode ser publicado');
-                    };
-                    
-
-                    
-                    /*/ 2. Esperar processamento (Instagram recomenda 30s~60s)
-                    this.logger.debug('⏳ Aguardando 60 segundos para o processamento do vídeo...');
-                    await new Promise((resolve) => setTimeout(resolve, 30000));
-
-                    // 3. Publicar o vídeo (Reel)
-                    const publishRes = await axios.post(
-                        `https://graph.facebook.com/v23.0/${horaUser[0].idPerfil}/media_publish`,
-                        new URLSearchParams({
-                            creation_id: containerId,
-                            access_token: chave[0].token,
-                        }),
-                    );
-                    this.logger.debug(publishRes);
-                    */                
-                }
-            }
-        }
+                    };                
+                };
+            };
+        };
         cont+= 1;
     };
     this.logger.debug('nada encontrado para ser publicado.')
