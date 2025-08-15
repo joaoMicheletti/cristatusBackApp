@@ -253,7 +253,12 @@ export class Automacao {
                             contLista +=1;
                         };
                     };
-                    this.logger.debug('lista de containers criado', childIds);
+                    this.logger.debug('lista de containers criado', childIds.toString());
+                    // chegamos aqui, então foi criado todos os containers.
+                    // vamos dar um tempo consideravel para que ele processe e deiche diponivel par publicação o container com o Vídeo.
+                    this.logger.debug(`aguardando a disponibilidade dos container com videos 3 minutos.`);
+                    await new Promise(r => setTimeout(r, 60000 * 3));
+                    
                 } else if(publicao[cont].formato === 'estatico') {
                     this.logger.debug('estaticoooo')
                     this.logger.debug(horaUser[0]);
