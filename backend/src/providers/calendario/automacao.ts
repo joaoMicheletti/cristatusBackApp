@@ -256,26 +256,68 @@ export class Automacao {
                     this.logger.debug('lista de containers criado', childIds.toString());
                     // chegamos aqui, então foi criado todos os containers.
                     // vamos dar um tempo consideravel para que ele processe e deiche diponivel par publicação o container com o Vídeo.
-                    this.logger.debug(`aguardando a disponibilidade dos container com videos 3 minutos.`);
-                    await new Promise(r => setTimeout(r, 60000 * 3));
-                    // carrossel pai container:
-                    const p = new URLSearchParams(
-                        { 
-                            media_type: 'CAROUSEL', 
-                            caption: `${encodeURIComponent(publicao[cont].legenda)}`,
+                    const delay = (ms: number) => new Promise(r => setTimeout(r, ms));
+                    async function createCarouselWithRetry() {
+                        const params = new URLSearchParams({
+                            media_type: 'CAROUSEL',
+                            caption: publicao[cont].legenda ?? '',           // sem encodeURIComponent
                             access_token: chave[0].token,
-                            children: `${childIds.toString()}`,
                         });
-                    const createCarousel = await axios.post(`https://graph.facebook.com/v23.0/${horaUser[0].idInsta}/media`, p);
-                    await new Promise(r => setTimeout(r, 60000 * 2));
-                    // verificar  o status do contrainer antes de efetuar mos e fato apublicação.:
-                    while(true){
-                        const statusRes = await axios.get(`https://graph.facebook.com/v23.0/${createCarousel.data.id}`, {
-                        params: { fields: 'status', access_token: chave[0].token }
-                        });
-                        console.log('status do processamento do Container ',statusRes.data);
-                        await new Promise(r => setTimeout(r, 60000 * 3));
-                    };
+                        childIds.forEach((id, i) => params.append(`children[${i}]`, String(id)));
+
+                        for (let attempt = 1; attempt <= 5; attempt++) {
+                            try {
+                            return await axios.post(
+                                `https://graph.facebook.com/v23.0/${horaUser[0].idInsta}/media`,
+                                params.toString(),
+                                { headers: { 'Content-Type': 'application/x-www-form-urlencoded' } }
+                            );
+                            } catch (e: any) {
+                            const err = e?.response?.data?.error;
+                            const isTransient = e?.response?.status >= 500 || err?.is_transient || err?.code === 2;
+                            if (attempt < 5 && isTransient) {
+                                const backoff = 1000 * Math.pow(2, attempt) + Math.floor(Math.random() * 300);
+                                this.logger.warn(`Transient ao criar carrossel (tentativa ${attempt}). Retentando em ${backoff}ms…`);
+                                await delay(backoff);
+                                continue;
+                            }
+                            throw e;
+                            }
+                        }
+                        throw new Error('Falha ao criar carrossel após retries.');
+                        }
+
+                        this.logger.debug('Aguardando 3 min para os filhos de vídeo propagarem…');
+                        await delay(3 * 60 * 1000);
+
+                        const createCarousel = await createCarouselWithRetry();
+                        const creationId = createCarousel.data.id;
+                        this.logger.debug('Container pai criado:', creationId);
+
+                        // 2) poll até finalizar
+                        let code = 'IN_PROGRESS';
+                        for (let i = 1; i <= 20; i++) {                 // ~20min se intervalo=60s
+                        const st = await axios.get(
+                            `https://graph.facebook.com/v23.0/${creationId}`,
+                            { params: { fields: 'status_code,status,error_message', access_token: chave[0].token } }
+                        );
+                        code = String(st.data.status_code || '').toUpperCase();
+                        this.logger.debug(`Status do pai [${i}]:`, st.data);
+
+                        if (code === 'FINISHED') break;
+                        if (code === 'ERROR') throw new Error(`Erro no container do carrossel: ${st.data.error_message || st.data.status}`);
+                        await delay(60 * 1000); // 60s entre polls (pode ser 3min se preferir)
+                        }
+
+                        if (code !== 'FINISHED') throw new Error(`Container não finalizou: ${code}`);
+
+                        // 3) publicar
+                        const publishRes = await axios.post(
+                        `https://graph.facebook.com/v23.0/${horaUser[0].idInsta}/media_publish`,
+                        new URLSearchParams({ creation_id: creationId, access_token: chave[0].token }).toString(),
+                        { headers: { 'Content-Type': 'application/x-www-form-urlencoded' } }
+                        );
+                        this.logger.debug('Publicado carrossel:', publishRes.data);
                     
 
                     
