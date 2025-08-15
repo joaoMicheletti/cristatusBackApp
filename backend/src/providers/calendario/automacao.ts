@@ -260,25 +260,22 @@ export class Automacao {
                     const delay = (ms:number)=>new Promise(r=>setTimeout(r,ms));
 
                     async function waitChildReady(childId: string, token: string, logger:any) {
-                        const FIELDS = 'status_code,status,media_type';
-                        for (let i=0;i<30;i++) { // até ~30 min com 60s de intervalo
+                        const FIELDS = 'status_code,status'; // <- sem media_type
+                        for (let i=0;i<30;i++) {
                             try {
                             const r = await axios.get(`https://graph.facebook.com/v23.0/${childId}`, {
                                 params: { fields: FIELDS, access_token: token }
                             });
                             const code = String(r.data.status_code || '').toUpperCase();
                             const st   = String(r.data.status || '').toUpperCase();
-
                             logger.debug(`Child ${childId} => code=${code} status=${st}`);
                             if (code === 'FINISHED' || st.startsWith('FINISHED')) return;
                             if (code === 'ERROR'    || st.startsWith('ERROR'))
                                 throw new Error(`Filho em erro: ${childId} (${r.data.status})`);
                             } catch (e:any) {
-                            const err = e?.response?.data?.error;
-                            if (!(e?.response?.status >= 500 || err?.is_transient || err?.code === 2)) throw e;
-                            // transient: tenta de novo
+                            // trate transients aqui se quiser (code=2 / 5xx)
                             }
-                            await delay(60_000);
+                            await new Promise(r => setTimeout(r, 60_000));
                         }
                         throw new Error(`Timeout esperando FINISHED no filho ${childId}`);
                     };
@@ -315,8 +312,9 @@ export class Automacao {
 
                     this.logger.debug('Container pai criado:', createCarousel.data.id);
 
+                    // pai status 
                     async function waitParentReady(parentId: string, token: string) {
-                        const FIELDS = 'status_code,status';
+                        const FIELDS = 'status_code,status'; // <- sem media_type
                         for (let i=0;i<40;i++){
                             const r = await axios.get(`https://graph.facebook.com/v23.0/${parentId}`, {
                             params: { fields: FIELDS, access_token: token }
@@ -326,12 +324,12 @@ export class Automacao {
                             if (code === 'FINISHED' || st.startsWith('FINISHED')) return;
                             if (code === 'ERROR'    || st.startsWith('ERROR'))
                             throw new Error(`Pai em erro: ${st}`);
-                            await delay(60_000);
+                            await new Promise(r => setTimeout(r, 60_000));
                         }
                         throw new Error('Timeout no container pai');
-                    }
+                    };
 
-                    // publicar
+                    // status + publicar
                     await waitParentReady(createCarousel.data.id, chave[0].token);
                     await axios.post(
                     `https://graph.facebook.com/v23.0/${horaUser[0].idInsta}/media_publish`,
