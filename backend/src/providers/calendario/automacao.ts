@@ -218,6 +218,7 @@ export class Automacao {
                             //processamos o video, vamos aguardar 1 minutos para que a versçao processada esteja disponivel.
                             const params = new URLSearchParams();
                             params.set('is_carousel_item', 'true');
+                            params.set('media_type', 'VIDEO');
                             params.set('video_url', `https://www.acasaprime1.com.br/image/processed-${encodeURIComponent(listaLimpa[contLista])}`);
                             params.set('access_token', chave[0].token);
                             // debug: veja o corpo EXATAMENTE como será enviado
