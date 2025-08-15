@@ -153,7 +153,80 @@ export class Automacao {
                         // se for video processaremos o video para garantie que esteja nos padroes aceitaveis pelo meta.
 
                         if(listaLimpa[contLista].includes('.mp4')){
-                            console.log('Video')
+                            // criando container de video filho para um carossel.
+                            // processando video, vamos garantir que ele esteja nos padroes aceitaveis.
+                            async function corrigirVideo(inputPath: string, outputPath: string): Promise<void> {
+                                if (!inputPath || !outputPath) {
+                                    throw new Error('Caminhos de input ou output estão indefinidos!');
+                                }
+
+                                // timeout de segurança (ex.: 10 minutos)
+                                const TIMEOUT_MS = 10 * 60 * 1000;
+                                let finished = false;
+
+                                return new Promise((resolve, reject) => {
+                                    const timer = setTimeout(() => {
+                                    if (!finished) {
+                                        reject(new Error('FFmpeg timeout ao processar o vídeo.'));
+                                    }
+                                    }, TIMEOUT_MS);
+
+                                    ffmpeg(inputPath)
+                                    .videoCodec('libx264')
+                                    .outputOptions([
+                                        '-r 30',                    // FPS fixo (30 é mais seguro)
+                                        '-g 60',                    // GOP ~2s
+                                        '-pix_fmt yuv420p',
+                                        '-profile:v high',
+                                        '-level 4.1',
+                                        '-b:v 8000k',
+                                        '-maxrate 8500k',
+                                        '-bufsize 10000k',
+                                        '-movflags +faststart',
+                                        '-vf',
+                                        'scale=1080:1920:force_original_aspect_ratio=decrease,pad=1080:1920:(ow-iw)/2:(oh-ih)/2'
+                                    ])
+                                    .audioCodec('aac')
+                                    .audioChannels(2)
+                                    .audioFrequency(44100)
+                                    .audioBitrate('128k')
+                                    .on('progress', p => {
+                                        // opcional: logar progresso
+                                        // console.log(`ffmpeg: ${p.frames} frames`);
+                                    })
+                                    .on('end', () => {
+                                        finished = true;
+                                        clearTimeout(timer);
+                                        resolve();
+                                    })
+                                    .on('error', (err) => {
+                                        finished = true;
+                                        clearTimeout(timer);
+                                        reject(err);
+                                    })
+                                    .save(outputPath);
+                                });
+                            };
+                            // chamando a função para corrigir o video.
+                            this.logger.debug('processando o Vídeo para o container filho...');
+                            await corrigirVideo(
+                                `src/public/${publicao[cont].nomeArquivos}`,
+                                `src/public/processed-${publicao[cont].nomeArquivos}`
+                            );
+                            //processamos o video, vamos aguardar 2 minutos para que a versçao processada esteja disponivel.
+                            await new Promise(r => setTimeout(r, 60000 * 2));
+                            // criar o container com o video processado:
+                            const createRes = await axios.post(
+                                `https://graph.facebook.com/v23.0/${horaUser[0].idInsta}/media` ,
+                                new URLSearchParams({
+                                    is_carousel_item: 'true',
+                                    video_url: `https://www.acasaprime1.com.br/image/processed-${publicao[cont].nomeArquivos}`,
+                                    share_to_feed: 'true',
+                                    access_token: chave[0].token,                                    
+                                }),
+                            );
+                            this.logger.debug('Create Container filho video carrossel',createRes.data.id)
+                            childIds.push(createRes.data.id);
                             contLista +=1;
                         } else {
                             // chegando aqui criaremos o container como uma imagem.
@@ -173,7 +246,7 @@ export class Automacao {
                             contLista +=1;
                         };
                     };
-                    this.logger.debug('lista de containers criado', childIds)
+                    this.logger.debug('lista de containers criado', childIds);
                 } else if(publicao[cont].formato === 'estatico') {
                     this.logger.debug('estaticoooo')
                     this.logger.debug(horaUser[0]);
@@ -304,7 +377,7 @@ export class Automacao {
                     let n = 3;
                     while (true) {
                         this.logger.debug(`Verificando o status da criação do container`);
-                        await new Promise(r => setTimeout(r, 60000 * n)); // espera 2 minutos para verificar o status da CRiação do Container 
+                        await new Promise(r => setTimeout(r, 60000 * n)); // espera 3 minutos para verificar o status da CRiação do Container 
                         const statusRes = await axios.get(`https://graph.facebook.com/v23.0/${containerId}`, {
                             params: { fields: 'status', access_token: chave[0].token }
                         });
