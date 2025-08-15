@@ -218,6 +218,7 @@ export class Automacao {
                             //processamos o video, vamos aguardar 1 minutos para que a versçao processada esteja disponivel.
                             await new Promise(r => setTimeout(r, 60000 * 1));
                             // criar o container com o video processado:
+                            console.log(`https://www.acasaprime1.com.br/image/processed-${listaLimpa[contLista]}`)
                             const createRes = await axios.post(
                                 `https://graph.facebook.com/v23.0/${horaUser[0].idInsta}/media`,
                                 new URLSearchParams({
