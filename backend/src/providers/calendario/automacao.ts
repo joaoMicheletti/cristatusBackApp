@@ -231,7 +231,31 @@ export class Automacao {
                                 params.toString(), // <-- manda a string explicitamente
                                 { headers: { 'Content-Type': 'application/x-www-form-urlencoded' } }
                             );
-                            this.logger.debug('Create Container filho video carrossel',createRes.data.id)
+                            this.logger.debug('Container filho video carrossel - criado',createRes.data.id)
+                            this.logger.debug('virificando a disponibilidade do container - criado...',createRes.data.id)
+                            // vamos verificar o status do Container criado.
+                            let Verification = 0;
+                            let n = 2;
+                            while (true) {
+                                this.logger.debug(`loop - + timer 2M - Verificando o status da criação do container`);
+                                await new Promise(r => setTimeout(r, 60000 * n)); // espera 3 minutos para verificar o status da CRiação do Container 
+                                const statusRes = await axios.get(`https://graph.facebook.com/v23.0/${createRes.data.id}`, {
+                                    params: { fields: 'status', access_token: chave[0].token }
+                                });
+                                this.logger.debug('acompanhamento do status do container', statusRes.data);
+
+                                if (statusRes.data.status === 'Finished: Media has been uploaded and it is ready to be published.'){
+                                    this.logger.debug('Finished')
+                                    Verification += 1;
+                                    break;
+                                } 
+                                if (statusRes.data.status === 'ERROR'){
+                                    let updateProcesso = await connection('calendario').where('id', publicao[cont].id).update('processo', null);
+                                    // enviar notificação do erro ao procesar video aos sociais medias e gestor de projetos.
+                                    this.logger.debug('erro ao processar video');
+                                };
+                            };                  
+                            
                             childIds.push(createRes.data.id);
                             
                             contLista +=1;
@@ -255,90 +279,7 @@ export class Automacao {
                     };
                     this.logger.debug('lista de containers criado', childIds.toString());
                     // chegamos aqui, então foi criado todos os containers.
-                    // vamos dar um tempo consideravel para que ele processe e deiche diponivel par publicação o container com o Vídeo.
         
-                    const delay = (ms:number)=>new Promise(r=>setTimeout(r,ms));
-
-                    async function waitChildReady(childId: string, token: string, logger:any) {
-                        const FIELDS = 'status_code,status'; // <- sem media_type
-                        for (let i=0;i<30;i++) {
-                            try {
-                            const r = await axios.get(`https://graph.facebook.com/v23.0/${childId}`, {
-                                params: { fields: FIELDS, access_token: token }
-                            });
-                            const code = String(r.data.status_code || '').toUpperCase();
-                            const st   = String(r.data.status || '').toUpperCase();
-                            logger.debug(`Child ${childId} => code=${code} status=${st}`);
-                            if (code === 'FINISHED' || st.startsWith('FINISHED')) return;
-                            if (code === 'ERROR'    || st.startsWith('ERROR'))
-                                throw new Error(`Filho em erro: ${childId} (${r.data.status})`);
-                            } catch (e:any) {
-                            // trate transients aqui se quiser (code=2 / 5xx)
-                            }
-                            await new Promise(r => setTimeout(r, 60_000));
-                        }
-                        throw new Error(`Timeout esperando FINISHED no filho ${childId}`);
-                    };
-                    // childIds já prontos e na ordem desejada
-                    for (const id of childIds) await waitChildReady(id, chave[0].token, this.logger);
-
-                    const params = new URLSearchParams();
-                    params.append('media_type', 'CAROUSEL');
-                    params.append('access_token', chave[0].token);
-                    params.append('children', childIds.join(',')); // <- CSV, não children[0]...
-
-                    const cap = (publicao[cont].legenda || '').trim();
-                    if (cap) params.append('caption', cap); // só manda se tiver texto
-
-                    // Retry resiliente para code=2 (transient)
-                    let createCarousel;
-                    for (let attempt=1; attempt<=5; attempt++){
-                    try {
-                        createCarousel = await axios.post(
-                        `https://graph.facebook.com/v23.0/${horaUser[0].idInsta}/media`,
-                        params.toString(),
-                        { headers: { 'Content-Type': 'application/x-www-form-urlencoded' } }
-                        );
-                        break; // deu boa
-                    } catch (e:any) {
-                        const err = e?.response?.data?.error;
-                        const transient = e?.response?.status >= 500 || err?.is_transient || err?.code === 2;
-                        if (!transient || attempt === 5) throw e;
-                        const backoff = 1000 * Math.pow(2, attempt); // 2s,4s,8s,16s...
-                        this.logger.warn(`Transient (code=${err?.code}). Retry #${attempt} em ${backoff}ms…`);
-                        await delay(backoff);
-                    }
-                    }
-
-                    this.logger.debug('Container pai criado:', createCarousel.data.id);
-
-                    // pai status 
-                    async function waitParentReady(parentId: string, token: string) {
-                        const FIELDS = 'status_code,status'; // <- sem media_type
-                        for (let i=0;i<40;i++){
-                            const r = await axios.get(`https://graph.facebook.com/v23.0/${parentId}`, {
-                            params: { fields: FIELDS, access_token: token }
-                            });
-                            const code = String(r.data.status_code || '').toUpperCase();
-                            const st   = String(r.data.status || '').toUpperCase();
-                            if (code === 'FINISHED' || st.startsWith('FINISHED')) return;
-                            if (code === 'ERROR'    || st.startsWith('ERROR'))
-                            throw new Error(`Pai em erro: ${st}`);
-                            await new Promise(r => setTimeout(r, 60_000));
-                        }
-                        throw new Error('Timeout no container pai');
-                    };
-
-                    // status + publicar
-                    await waitParentReady(createCarousel.data.id, chave[0].token);
-                    await axios.post(
-                    `https://graph.facebook.com/v23.0/${horaUser[0].idInsta}/media_publish`,
-                    new URLSearchParams({
-                        creation_id: createCarousel.data.id,
-                        access_token: chave[0].token
-                    }).toString(),
-                    { headers: { 'Content-Type': 'application/x-www-form-urlencoded' } }
-                    );
 
 
                 } else if(publicao[cont].formato === 'estatico') {
