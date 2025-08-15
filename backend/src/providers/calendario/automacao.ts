@@ -223,7 +223,6 @@ export class Automacao {
                                 new URLSearchParams({
                                     is_carousel_item: 'true',
                                     video_url: `https://www.acasaprime1.com.br/image/processed-${listaLimpa[contLista]}`,
-                                    share_to_feed: 'true',
                                     access_token: chave[0].token,                                    
                                 }),
                             );
