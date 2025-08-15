@@ -223,7 +223,7 @@ export class Automacao {
                                 `https://graph.facebook.com/v23.0/${horaUser[0].idInsta}/media`,
                                 new URLSearchParams({
                                     is_carousel_item: 'true',
-                                    video_url: `https://www.acasaprime1.com.br/image/processed-${listaLimpa[contLista]}`,
+                                    video_url: `https://www.acasaprime1.com.br/image/processed-${encodeURIComponent(listaLimpa[contLista])}`,
                                     access_token: chave[0].token,
                                 }),
                                 { headers: { 'Content-Type': 'application/x-www-form-urlencoded' } }
