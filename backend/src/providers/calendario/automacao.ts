@@ -299,7 +299,7 @@ export class Automacao {
                         for (let i = 1; i <= 20; i++) {                 // ~20min se intervalo=60s
                         const st = await axios.get(
                             `https://graph.facebook.com/v23.0/${creationId}`,
-                            { params: { fields: 'status_code,status,error_message', access_token: chave[0].token } }
+                            { params: { fields: 'status_code,status', access_token: chave[0].token } }
                         );
                         code = String(st.data.status_code || '').toUpperCase();
                         this.logger.debug(`Status do pai [${i}]:`, st.data);
@@ -319,7 +319,6 @@ export class Automacao {
                         );
                         this.logger.debug('Publicado carrossel:', publishRes.data);
                     
-
                     
                 } else if(publicao[cont].formato === 'estatico') {
                     this.logger.debug('estaticoooo')
