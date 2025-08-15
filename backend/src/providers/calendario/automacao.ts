@@ -285,39 +285,39 @@ export class Automacao {
                             }
                         }
                         throw new Error('Falha ao criar carrossel após retries.');
-                        }
+                    };
 
-                        this.logger.debug('Aguardando 3 min para os filhos de vídeo propagarem…');
-                        await delay(3 * 60 * 1000);
+                    this.logger.debug('Aguardando 3 min para os filhos de vídeo propagarem…');
+                    await delay(3 * 60 * 1000);
 
-                        const createCarousel = await createCarouselWithRetry();
-                        const creationId = createCarousel.data.id;
-                        this.logger.debug('Container pai criado:', creationId);
+                    const createCarousel = await createCarouselWithRetry();
+                    const creationId = createCarousel.data.id;
+                    this.logger.debug('Container pai criado:', creationId);
 
-                        // 2) poll até finalizar
-                        let code = 'IN_PROGRESS';
-                        for (let i = 1; i <= 20; i++) {                 // ~20min se intervalo=60s
-                        const st = await axios.get(
-                            `https://graph.facebook.com/v23.0/${creationId}`,
-                            { params: { fields: 'status_code,status', access_token: chave[0].token } }
-                        );
-                        code = String(st.data.status_code || '').toUpperCase();
-                        this.logger.debug(`Status do pai [${i}]:`, st.data);
+                    // 2) poll até finalizar
+                    let code = 'IN_PROGRESS';
+                    for (let i = 1; i <= 20; i++) {                 // ~20min se intervalo=60s
+                    const st = await axios.get(
+                        `https://graph.facebook.com/v23.0/${creationId}`,
+                        { params: { fields: 'status_code,status', access_token: chave[0].token } }
+                    );
+                    code = String(st.data.status_code || '').toUpperCase();
+                    this.logger.debug(`Status do pai [${i}]:`, st.data);
 
-                        if (code === 'FINISHED') break;
-                        if (code === 'ERROR') throw new Error(`Erro no container do carrossel: ${st.data.error_message || st.data.status}`);
-                        await delay(60 * 1000); // 60s entre polls (pode ser 3min se preferir)
-                        }
+                    if (code === 'FINISHED') break;
+                    if (code === 'ERROR') throw new Error(`Erro no container do carrossel: ${st.data.error_message || st.data.status}`);
+                    await delay(60 * 1000); // 60s entre polls (pode ser 3min se preferir)
+                    };
 
-                        if (code !== 'FINISHED') throw new Error(`Container não finalizou: ${code}`);
+                    if (code !== 'FINISHED') throw new Error(`Container não finalizou: ${code}`);
 
-                        // 3) publicar
-                        const publishRes = await axios.post(
-                        `https://graph.facebook.com/v23.0/${horaUser[0].idInsta}/media_publish`,
-                        new URLSearchParams({ creation_id: creationId, access_token: chave[0].token }).toString(),
-                        { headers: { 'Content-Type': 'application/x-www-form-urlencoded' } }
-                        );
-                        this.logger.debug('Publicado carrossel:', publishRes.data);
+                    // 3) publicar
+                    const publishRes = await axios.post(
+                    `https://graph.facebook.com/v23.0/${horaUser[0].idInsta}/media_publish`,
+                    new URLSearchParams({ creation_id: creationId, access_token: chave[0].token }).toString(),
+                    { headers: { 'Content-Type': 'application/x-www-form-urlencoded' } }
+                    );
+                    this.logger.debug('Publicado carrossel:', publishRes.data);
                     
                     
                 } else if(publicao[cont].formato === 'estatico') {
