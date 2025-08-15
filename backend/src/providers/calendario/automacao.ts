@@ -304,7 +304,7 @@ export class Automacao {
                     const createPai = await axios.post(
                         `https://graph.facebook.com/v23.0/${horaUser[0].idInsta}/media`,
                         new URLSearchParams({
-                            "media_type":"CARROSSEL",
+                            "media_type":"CAROUSEL",
                             'caption':`${publicao[cont].legenda}`,
                             "share_to_feed": 'true',
                             "children": `${childIds.toString()}`,
@@ -313,6 +313,7 @@ export class Automacao {
                             headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
                         }
                     );
+                    //verificar o status do container pai 
                     let Verification = 0;
                     while (true) {
                         this.logger.debug(`loop - + timer 1 M - Verificando o status da criação do container (Pai)`);
