@@ -274,6 +274,27 @@ export class Automacao {
                             );
                             // ID do filho:
                             childIds.push(createChild.data.id);
+                            let Verification = 0;
+                            let n = 2;
+                            while (true) {
+                                this.logger.debug(`loop - + timer 1 M - Verificando o status da criação do container`);
+                                await new Promise(r => setTimeout(r, 60000)); // espera 3 minutos para verificar o status da CRiação do Container 
+                                const statusRes = await axios.get(`https://graph.facebook.com/v23.0/${createChild.data.id}`, {
+                                    params: { fields: 'status', access_token: chave[0].token }
+                                });
+                                this.logger.debug('acompanhamento do status do container', statusRes.data);
+
+                                if (statusRes.data.status === 'Finished: Media has been uploaded and it is ready to be published.'){
+                                    this.logger.debug('Finished')
+                                    Verification += 1;
+                                    break;
+                                } 
+                                if (statusRes.data.status === 'ERROR'){
+                                    let updateProcesso = await connection('calendario').where('id', publicao[cont].id).update('processo', null);
+                                    // enviar notificação do erro ao procesar video aos sociais medias e gestor de projetos.
+                                    this.logger.debug('erro ao processar video');
+                                };
+                            };    
                             contLista +=1;
                         };
                     };
