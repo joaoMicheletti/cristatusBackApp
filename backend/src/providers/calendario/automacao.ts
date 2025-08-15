@@ -146,12 +146,37 @@ export class Automacao {
                     // separando o nome dos arquivos Por (,);
                     let listaLimpa = removeCaracteres.split(',');
                     console.log(listaLimpa);
+                    let contLista = 0;
+                    const childIds: string[] = []; // lista de containers
+                    while (contLista < listaLimpa.length){
+                        // verificar qual o tipo do arquivo, com base na estenção do arquivo.mp4 para vieos os demais img
+                        // se for video processaremos o video para garantie que esteja nos padroes aceitaveis pelo meta.
+
+                        if(listaLimpa[contLista].includes('.mp4')){
+                            console.log('Video')
+                        } else {
+                            // chegando aqui criaremos o container como uma imagem.
+                            const imageUrl = `https://www.acasaprime1.com.br/image/${encodeURIComponent(listaLimpa[contLista])}`;
+                            const createChild = await axios.post(
+                            `https://graph.facebook.com/v23.0/${horaUser[0].idInsta}/media`,
+                            new URLSearchParams({
+                                image_url: imageUrl,           // URL pública direta
+                                is_carousel_item: 'true',
+                                access_token: chave[0].token,
+                            }), {
+                                headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
+                            }
+                            );
+                            // ID do filho:
+                            childIds.push(createChild.data.id);
+                        };
+                    };
+                    this.logger.debug('lista de containers criado', childIds)
                 } else if(publicao[cont].formato === 'estatico') {
                     this.logger.debug('estaticoooo')
                     this.logger.debug(horaUser[0]);
-                    // efetuar apublicação no formato de video ou estatico.
+                    // efetuar a criação do container 
                     let url: string = `https://graph.facebook.com/v23.0/${horaUser[0].idInsta}/media?image_url=https://www.acasaprime1.com.br/image/${publicao[cont].nomeArquivos}&caption=${encodeURIComponent(publicao[cont].legenda)}&access_token=${chave[0].token}`
-                    // efetuar a criação do container :
                     this.logger.debug(url)
                     const resp = await fetch(url, { method: 'POST' });
                     // resposta da solisitação - paese Json
