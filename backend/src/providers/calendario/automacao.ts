@@ -219,7 +219,7 @@ export class Automacao {
                             const params = new URLSearchParams();
                             params.set('is_carousel_item', 'true');
                             params.set('media_type', 'VIDEO');
-                            params.set('video_url', `https://www.acasaprime1.com.br/image/processed-${encodeURIComponent(listaLimpa[contLista])}`);
+                            params.set('video_url', `https://www.acasaprime1.com.br/image/processed-${listaLimpa[contLista]}`);
                             params.set('access_token', chave[0].token);
                             // debug: veja o corpo EXATAMENTE como será enviado
                             console.log('FORM =>', params.toString());
@@ -231,7 +231,7 @@ export class Automacao {
                                 params.toString(), // <-- manda a string explicitamente
                                 { headers: { 'Content-Type': 'application/x-www-form-urlencoded' } }
                             );
-                            this.logger.debug('Container filho video carrossel - criado',createRes.data.id)
+                            this.logger.debug('Container filho video carrossel - criado>>>>>>>>>',createRes.data.id)
                             this.logger.debug('virificando a disponibilidade do container - criado...',createRes.data.id)
                             // vamos verificar o status do Container criado.
                             let Verification = 0;
