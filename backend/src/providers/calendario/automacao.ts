@@ -258,6 +258,26 @@ export class Automacao {
                     // vamos dar um tempo consideravel para que ele processe e deiche diponivel par publicação o container com o Vídeo.
                     this.logger.debug(`aguardando a disponibilidade dos container com videos 3 minutos.`);
                     await new Promise(r => setTimeout(r, 60000 * 3));
+                    // carrossel pai container:
+                    const p = new URLSearchParams(
+                        { 
+                            media_type: 'CAROUSEL', 
+                            caption: `${encodeURIComponent(publicao[cont].legenda)}`,
+                            access_token: chave[0].token,
+                            children: `${childIds.toString()}`,
+                        });
+                    const createCarousel = await axios.post(`https://graph.facebook.com/v23.0/${horaUser[0].idInsta}/media`, p);
+                    await new Promise(r => setTimeout(r, 60000 * 2));
+                    // verificar  o status do contrainer antes de efetuar mos e fato apublicação.:
+                    while(true){
+                        const statusRes = await axios.get(`https://graph.facebook.com/v23.0/${createCarousel.data.id}`, {
+                        params: { fields: 'status', access_token: chave[0].token }
+                        });
+                        console.log('status do processamento do Container ',statusRes.data);
+                        await new Promise(r => setTimeout(r, 60000 * 3));
+                    };
+                    
+
                     
                 } else if(publicao[cont].formato === 'estatico') {
                     this.logger.debug('estaticoooo')
