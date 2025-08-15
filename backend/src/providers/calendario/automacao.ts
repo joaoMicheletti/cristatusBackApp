@@ -157,7 +157,7 @@ export class Automacao {
                         if(listaLimpa[contLista].includes('.mp4')){
                             // criando container de video filho para um carossel.
                             // processando video, vamos garantir que ele esteja nos padroes aceitaveis.
-                            async function corrigirVideo(inputPath: string, outputPath: string): Promise<void> {
+                            /*async function corrigirVideo(inputPath: string, outputPath: string): Promise<void> {
                                 if (!inputPath || !outputPath) {
                                     throw new Error('Caminhos de input ou output estão indefinidos!');
                                 }
@@ -211,7 +211,7 @@ export class Automacao {
                             };
                             // chamando a função para corrigir o video.
                             this.logger.debug('processando o Vídeo para o container filho...');
-                            /*await corrigirVideo(
+                            await corrigirVideo(
                                 `src/public/${listaLimpa[contLista]}`,
                                 `src/public/processed-${listaLimpa[contLista]}`
                             );*/
@@ -225,7 +225,7 @@ export class Automacao {
                             console.log('FORM =>', params.toString());
                            // await new Promise(r => setTimeout(r, 60000 * 1));
                             // criar o container com o video processado:
-                            console.log(`https://www.acasaprime1.com.br/image/processed-${listaLimpa[contLista]}`)
+                            /*console.log(`https://www.acasaprime1.com.br/image/processed-${listaLimpa[contLista]}`)
                             const createRes = await axios.post(
                                 `https://graph.facebook.com/v23.0/${horaUser[0].idInsta}/media`,
                                 new URLSearchParams({
@@ -237,6 +237,7 @@ export class Automacao {
                             );
                             this.logger.debug('Create Container filho video carrossel',createRes.data.id)
                             childIds.push(createRes.data.id);
+                            /*/
                             contLista +=1;
                         } else {
                             // chegando aqui criaremos o container como uma imagem.
