@@ -256,70 +256,93 @@ export class Automacao {
                     this.logger.debug('lista de containers criado', childIds.toString());
                     // chegamos aqui, então foi criado todos os containers.
                     // vamos dar um tempo consideravel para que ele processe e deiche diponivel par publicação o container com o Vídeo.
-                    const delay = (ms: number) => new Promise(r => setTimeout(r, ms));
-                    async function createCarouselWithRetry() {
-                        const params = new URLSearchParams({
-                            media_type: 'CAROUSEL',
-                            caption: publicao[cont].legenda ?? '',           // sem encodeURIComponent
-                            access_token: chave[0].token,
-                        });
-                        childIds.forEach((id, i) => params.append(`children[${i}]`, String(id)));
+        
+                    const delay = (ms:number)=>new Promise(r=>setTimeout(r,ms));
 
-                        for (let attempt = 1; attempt <= 5; attempt++) {
+                    async function waitChildReady(childId: string, token: string, logger:any) {
+                        const FIELDS = 'status_code,status,media_type';
+                        for (let i=0;i<30;i++) { // até ~30 min com 60s de intervalo
                             try {
-                            return await axios.post(
-                                `https://graph.facebook.com/v23.0/${horaUser[0].idInsta}/media`,
-                                params.toString(),
-                                { headers: { 'Content-Type': 'application/x-www-form-urlencoded' } }
-                            );
-                            } catch (e: any) {
+                            const r = await axios.get(`https://graph.facebook.com/v23.0/${childId}`, {
+                                params: { fields: FIELDS, access_token: token }
+                            });
+                            const code = String(r.data.status_code || '').toUpperCase();
+                            const st   = String(r.data.status || '').toUpperCase();
+
+                            logger.debug(`Child ${childId} => code=${code} status=${st}`);
+                            if (code === 'FINISHED' || st.startsWith('FINISHED')) return;
+                            if (code === 'ERROR'    || st.startsWith('ERROR'))
+                                throw new Error(`Filho em erro: ${childId} (${r.data.status})`);
+                            } catch (e:any) {
                             const err = e?.response?.data?.error;
-                            const isTransient = e?.response?.status >= 500 || err?.is_transient || err?.code === 2;
-                            if (attempt < 5 && isTransient) {
-                                const backoff = 1000 * Math.pow(2, attempt) + Math.floor(Math.random() * 300);
-                                console.log(`Transient ao criar carrossel (tentativa ${attempt}). Retentando em ${backoff}ms…`);
-                                await delay(backoff);
-                                continue;
+                            if (!(e?.response?.status >= 500 || err?.is_transient || err?.code === 2)) throw e;
+                            // transient: tenta de novo
                             }
-                            throw e;
-                            }
+                            await delay(60_000);
                         }
-                        throw new Error('Falha ao criar carrossel após retries.');
+                        throw new Error(`Timeout esperando FINISHED no filho ${childId}`);
                     };
+                    // childIds já prontos e na ordem desejada
+                    for (const id of childIds) await waitChildReady(id, chave[0].token, this.logger);
 
-                    this.logger.debug('Aguardando 3 min para os filhos de vídeo propagarem…');
-                    await delay(3 * 60 * 1000);
+                    const params = new URLSearchParams();
+                    params.append('media_type', 'CAROUSEL');
+                    params.append('access_token', chave[0].token);
+                    params.append('children', childIds.join(',')); // <- CSV, não children[0]...
 
-                    const createCarousel = await createCarouselWithRetry();
-                    const creationId = createCarousel.data.id;
-                    this.logger.debug('Container pai criado:', creationId);
+                    const cap = (publicao[cont].legenda || '').trim();
+                    if (cap) params.append('caption', cap); // só manda se tiver texto
 
-                    // 2) poll até finalizar
-                    let code = 'IN_PROGRESS';
-                    for (let i = 1; i <= 20; i++) {                 // ~20min se intervalo=60s
-                    const st = await axios.get(
-                        `https://graph.facebook.com/v23.0/${creationId}`,
-                        { params: { fields: 'status_code,status', access_token: chave[0].token } }
-                    );
-                    code = String(st.data.status_code || '').toUpperCase();
-                    this.logger.debug(`Status do pai [${i}]:`, st.data);
+                    // Retry resiliente para code=2 (transient)
+                    let createCarousel;
+                    for (let attempt=1; attempt<=5; attempt++){
+                    try {
+                        createCarousel = await axios.post(
+                        `https://graph.facebook.com/v23.0/${horaUser[0].idInsta}/media`,
+                        params.toString(),
+                        { headers: { 'Content-Type': 'application/x-www-form-urlencoded' } }
+                        );
+                        break; // deu boa
+                    } catch (e:any) {
+                        const err = e?.response?.data?.error;
+                        const transient = e?.response?.status >= 500 || err?.is_transient || err?.code === 2;
+                        if (!transient || attempt === 5) throw e;
+                        const backoff = 1000 * Math.pow(2, attempt); // 2s,4s,8s,16s...
+                        this.logger.warn(`Transient (code=${err?.code}). Retry #${attempt} em ${backoff}ms…`);
+                        await delay(backoff);
+                    }
+                    }
 
-                    if (code === 'FINISHED') break;
-                    if (code === 'ERROR') throw new Error(`Erro no container do carrossel: ${st.data.error_message || st.data.status}`);
-                    await delay(60 * 1000); // 60s entre polls (pode ser 3min se preferir)
-                    };
+                    this.logger.debug('Container pai criado:', createCarousel.data.id);
 
-                    if (code !== 'FINISHED') throw new Error(`Container não finalizou: ${code}`);
+                    async function waitParentReady(parentId: string, token: string) {
+                        const FIELDS = 'status_code,status';
+                        for (let i=0;i<40;i++){
+                            const r = await axios.get(`https://graph.facebook.com/v23.0/${parentId}`, {
+                            params: { fields: FIELDS, access_token: token }
+                            });
+                            const code = String(r.data.status_code || '').toUpperCase();
+                            const st   = String(r.data.status || '').toUpperCase();
+                            if (code === 'FINISHED' || st.startsWith('FINISHED')) return;
+                            if (code === 'ERROR'    || st.startsWith('ERROR'))
+                            throw new Error(`Pai em erro: ${st}`);
+                            await delay(60_000);
+                        }
+                        throw new Error('Timeout no container pai');
+                    }
 
-                    // 3) publicar
-                    const publishRes = await axios.post(
+                    // publicar
+                    await waitParentReady(createCarousel.data.id, chave[0].token);
+                    await axios.post(
                     `https://graph.facebook.com/v23.0/${horaUser[0].idInsta}/media_publish`,
-                    new URLSearchParams({ creation_id: creationId, access_token: chave[0].token }).toString(),
+                    new URLSearchParams({
+                        creation_id: createCarousel.data.id,
+                        access_token: chave[0].token
+                    }).toString(),
                     { headers: { 'Content-Type': 'application/x-www-form-urlencoded' } }
                     );
-                    this.logger.debug('Publicado carrossel:', publishRes.data);
-                    
-                    
+
+
                 } else if(publicao[cont].formato === 'estatico') {
                     this.logger.debug('estaticoooo')
                     this.logger.debug(horaUser[0]);
