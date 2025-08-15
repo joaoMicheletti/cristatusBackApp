@@ -145,7 +145,7 @@ export class Automacao {
                     let removeCaracteres = nomeArquivos.replace(/[\[\]"\/\\]/g, '');
                     // separando o nome dos arquivos Por (,);
                     let listaLimpa = removeCaracteres.split(',');
-                    console.log(listaLimpa);
+                    console.log(listaLimpa, listaLimpa.length);
                     let contLista = 0;
                     const childIds: string[] = []; // lista de containers
                     while (contLista < listaLimpa.length){
@@ -154,6 +154,7 @@ export class Automacao {
 
                         if(listaLimpa[contLista].includes('.mp4')){
                             console.log('Video')
+                            contLista +=1;
                         } else {
                             // chegando aqui criaremos o container como uma imagem.
                             const imageUrl = `https://www.acasaprime1.com.br/image/${encodeURIComponent(listaLimpa[contLista])}`;
@@ -169,6 +170,7 @@ export class Automacao {
                             );
                             // ID do filho:
                             childIds.push(createChild.data.id);
+                            contLista +=1;
                         };
                     };
                     this.logger.debug('lista de containers criado', childIds)
