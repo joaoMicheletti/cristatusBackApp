@@ -157,6 +157,7 @@ export class Automacao {
                         if(listaLimpa[contLista].includes('.mp4')){
                             // criando container de video filho para um carossel.
                             // processando video, vamos garantir que ele esteja nos padroes aceitaveis.
+                            /** 
                             async function corrigirVideo(inputPath: string, outputPath: string): Promise<void> {
                                 if (!inputPath || !outputPath) {
                                     throw new Error('Caminhos de input ou output estão indefinidos!');
@@ -215,6 +216,134 @@ export class Automacao {
                                 `src/public/${listaLimpa[contLista]}`,
                                 `src/public/processed-${listaLimpa[contLista]}`
                             );
+                            */
+
+                            type CorrigirOpts = {
+                                /** 'pad' = preserva todo o quadro com barras; 'crop' = corta centralmente */
+                                strategy?: 'pad' | 'crop';
+                                /** alvo do carrossel: '4_5' (padrão), '1_1' ou '16_9' */
+                                target?: '4_5' | '1_1' | '16_9';
+                                /** fps de saída */
+                                fps?: number;
+                                /** corta a duração se exceder (em segundos). Use null para não cortar. */
+                                maxDurationSec?: number | null;
+                                /** bitrate de vídeo em kbps */
+                                videoBitrateK?: number;
+                            };
+
+                            async function corrigirVideo(
+                                inputPath: string,
+                                outputPath: string,
+                                opts: CorrigirOpts = {}
+                            ): Promise<void> {
+                                if (!inputPath || !outputPath) {
+                                    throw new Error('Caminhos de input ou output estão indefinidos!');
+                                }
+
+                                const {
+                                    strategy = 'pad',
+                                    target = '4_5',
+                                    fps = 30,
+                                    maxDurationSec = 60,
+                                    videoBitrateK = 8000, // ~8 Mbps é seguro para feed
+                                } = opts;
+
+                                // Dimensões alvo por preset
+                                const targets = {
+                                    '4_5': { w: 1080, h: 1350 },
+                                    '1_1': { w: 1080, h: 1080 },
+                                    // 16:9 com largura 1080 (altura 608) para manter consistência com imagens 1080px
+                                    '16_9': { w: 1080, h: 608 },
+                                } as const;
+                                const T = targets[target];
+
+                                // timeout de segurança (10 min)
+                                const TIMEOUT_MS = 10 * 60 * 1000;
+
+                            // Monta o filtro de vídeo conforme estratégia
+                                const buildVf = async () => {
+                                    if (strategy === 'pad') {
+                                    // preserva tudo e completa com barras
+                                    return `scale=${T.w}:${T.h}:force_original_aspect_ratio=decrease,pad=${T.w}:${T.h}:(ow-iw)/2:(oh-ih)/2`;
+                                    }
+
+                                    // strategy === 'crop' → corta centralmente
+                                    // Precisamos saber o AR de entrada para escolher o melhor caminho de scale→crop
+                                    const probe = await new Promise<any>((res, rej) => {
+                                    ffmpeg.ffprobe(inputPath, (err, data) => (err ? rej(err) : res(data)));
+                                    });
+
+                                    const stream = (probe.streams || []).find((s: any) => s.codec_type === 'video') || {};
+                                    const inW = Number(stream.width) || 0;
+                                    const inH = Number(stream.height) || 0;
+                                    const inAR = inW && inH ? inW / inH : 1;
+
+                                    const targetAR = T.w / T.h;
+
+                                    // Se vídeo for mais "largo" que o alvo → escale por altura e corte na largura
+                                    // Senão → escale por largura e corte na altura
+                                    if (inAR >= targetAR) {
+                                    // wide → garante altura T.h, corta largura para T.w
+                                    return `scale=-2:${T.h},crop=${T.w}:${T.h}`;
+                                    } else {
+                                    // tall → garante largura T.w, corta altura para T.h
+                                    return `scale=${T.w}:-2,crop=${T.w}:${T.h}`;
+                                    }
+                                };
+
+                                const vf = await buildVf();
+
+                                let finished = false;
+                                return new Promise((resolve, reject) => {
+                                    const timer = setTimeout(() => {
+                                    if (!finished) reject(new Error('FFmpeg timeout ao processar o vídeo.'));
+                                    }, TIMEOUT_MS);
+
+                                    const outOpts: string[] = [
+                                    `-r ${fps}`,                       // CFR
+                                    `-g ${fps * 2}`,                   // GOP ~2s
+                                    '-pix_fmt yuv420p',
+                                    '-profile:v high',
+                                    '-level 4.1',
+                                    `-b:v ${videoBitrateK}k`,
+                                    `-maxrate ${Math.round(videoBitrateK * 1.1)}k`,
+                                    `-bufsize ${Math.round(videoBitrateK * 1.25)}k`,
+                                    '-vsync cfr',
+                                    '-movflags +faststart',
+                                    '-map_metadata -1',
+                                    '-vf', vf,
+                                    ];
+
+                                    if (maxDurationSec && maxDurationSec > 0) {
+                                    outOpts.push(`-t ${Math.floor(maxDurationSec)}`);
+                                    }
+
+                                    ffmpeg(inputPath)
+                                    .videoCodec('libx264')
+                                    .outputOptions(outOpts)
+                                    .audioCodec('aac')
+                                    .audioChannels(2)
+                                    .audioFrequency(48000)            // 48 kHz (recomendado)
+                                    .audioBitrate('128k')
+                                    .on('progress', p => {
+                                        // opcional: console.log(`ffmpeg: ${p?.frames ?? 0} frames`);
+                                    })
+                                    .on('end', () => {
+                                        finished = true;
+                                        clearTimeout(timer);
+                                        resolve();
+                                    })
+                                    .on('error', (err) => {
+                                        finished = true;
+                                        clearTimeout(timer);
+                                        reject(err);
+                                    })
+                                    .save(outputPath);
+                                });
+                            };
+
+                            await corrigirVideo(`src/public/${listaLimpa[contLista]}`, `src/public/processed-${listaLimpa[contLista]}`, { strategy: 'pad', target: '1_1' });
+
                             
                             // passo 1: criar a sessão de upload
                             console.log('Processo 1 - criarndo container com o Video Resumable....')
