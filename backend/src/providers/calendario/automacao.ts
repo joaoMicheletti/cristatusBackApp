@@ -351,7 +351,8 @@ export class Automacao {
                                 `media_type=VIDEO` +
                                 `&is_carousel_item=true` +
                                 `&upload_type=resumable` +
-                                `&access_token=${encodeURIComponent(chave[0].token)}`;
+                                `&access_token=${encodeURIComponent(chave[0].token)}`
+                            ;
 
                             const { data: session } = await axios.post(
                                 `https://graph.facebook.com/v23.0/${horaUser[0].idInsta}/media`,
@@ -391,7 +392,8 @@ export class Automacao {
                                 }
                                 );
                                 if (status.status_code === "FINISHED") {
-                                    console.log('resposta positiva do upload do video.', status.status_code)
+                                    console.log('resposta positiva do upload do video.', status.status_code);
+                                    childIds.push(session.id); // adicionando o container filho na lista de container
                                     return session.id; // pronto pra usar no children
                                 };
                                 if (status.status_code === "ERROR" || status.status_code === "EXPIRED") {
@@ -403,6 +405,7 @@ export class Automacao {
                             if(i === 5){
                                 console.log('tempo limite estourado, 5 minutos e não foi efetuado o Upload.')
                             }
+                            contLista +=1;
   
                             /** 
                             //processamos o video, vamos aguardar 1 minutos para que a versçao processada esteja disponivel.
