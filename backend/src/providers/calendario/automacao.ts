@@ -479,12 +479,12 @@ export class Automacao {
                             let Verification = 0;
                             let n = 2;
                             while (true) {
-                                this.logger.debug(`loop - + timer 1 M - Verificando o status da criação do container`);
+                                this.logger.debug(`loop - + timer 1 M - Verificando o status da criação do container filho img`);
                                 await new Promise(r => setTimeout(r, 60000)); // espera 3 minutos para verificar o status da CRiação do Container 
                                 const statusRes = await axios.get(`https://graph.facebook.com/v23.0/${createChild.data.id}`, {
                                     params: { fields: 'status', access_token: chave[0].token }
                                 });
-                                this.logger.debug('acompanhamento do status do container', statusRes.data);
+                                this.logger.debug('acompanhamento do status do container filho img', statusRes.data);
 
                                 if (statusRes.data.status === 'Finished: Media has been uploaded and it is ready to be published.'){
                                     this.logger.debug('Finished')
@@ -535,6 +535,14 @@ export class Automacao {
 
                         if (statusRes.data.status === 'Finished: Media has been uploaded and it is ready to be published.'){
                             this.logger.debug('Finished')
+                            // efetuar publicação do container Pai:
+                            const publiCintainerDead = await axios.post(
+                                `https://graph.facebook.com/v23.0/${horaUser[0].idInsta}/media_publish?creation_id=${statusRes.data.id}&access_token=${chave[0].token}`,
+                                {
+                                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
+                                }
+                            );
+                            console.log('resposta da publicação do Container Pai - >>>>', publiCintainerDead.data)
                             Verification += 1;
                             break;
                         } 
