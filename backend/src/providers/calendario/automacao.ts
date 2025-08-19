@@ -301,15 +301,23 @@ export class Automacao {
                     this.logger.debug('lista de containers criado', childIds.toString());
                     // chegamos aqui, então foi criado todos os containers.
                     // criando container pai do carossel:
+                    // teste com os parametro em uma payload- 
+                    const payload =
+                        `media_type=CAROUSEL` +
+                        `&children=${childIds.toString()}` +
+                        `&caption=${encodeURIComponent(publicao[cont].legenda)}` +
+                        `&access_token=${encodeURIComponent(chave[0].token)}`;
+                        console.log('PAYLOAD >>>>',payload)
                     const createPai = await axios.post(
-                        `https://graph.facebook.com/v23.0/${horaUser[0].idInsta}/media`,
+                        `https://graph.facebook.com/v23.0/${horaUser[0].idInsta}/media`,payload,
+                        /** 
                         new URLSearchParams({
                             "media_type":"CAROUSEL",
                             'caption':`${publicao[cont].legenda}`,
                             "share_to_feed": 'true',
                             "children": `${childIds.toString()}`,
                             access_token: chave[0].token,
-                        }), {
+                        }),*/ {
                             headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
                         }
                     );
