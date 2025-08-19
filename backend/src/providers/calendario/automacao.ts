@@ -394,7 +394,8 @@ export class Automacao {
                                 if (status.status_code === "FINISHED") {
                                     console.log('resposta positiva do upload do video.', status.status_code);
                                     childIds.push(session.id); // adicionando o container filho na lista de container
-                                    return session.id; // pronto pra usar no children
+                                    console.log('lista de containers Criados:', childIds);
+                                    break;
                                 };
                                 if (status.status_code === "ERROR" || status.status_code === "EXPIRED") {
                                     throw new Error(`Upload falhou: ${status.status_code} (id=${session.id})`);
@@ -406,7 +407,6 @@ export class Automacao {
                                 console.log('tempo limite estourado, 5 minutos e não foi efetuado o Upload.')
                             }
                             contLista +=1;
-  
                             /** 
                             //processamos o video, vamos aguardar 1 minutos para que a versçao processada esteja disponivel.
                             const params = new URLSearchParams();
