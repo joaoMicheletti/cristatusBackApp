@@ -3,6 +3,7 @@ import { Cron } from '@nestjs/schedule';
 import connection from 'src/database/connection';
 import axios from 'axios';
 const ffmpeg = require('fluent-ffmpeg');
+import https from "https";
 @Injectable()
 export class Automacao {
   private readonly logger = new Logger(Automacao.name);
@@ -453,6 +454,13 @@ export class Automacao {
                             contLista +=1;*/
                         } else {
                             // chegando aqui criaremos o container como uma imagem.
+                            const agent = new https.Agent({
+                                keepAlive: true,
+                                maxSockets: 50,
+                                maxFreeSockets: 10,
+                                keepAliveMsecs: 10000,
+                                timeout: 60000,// socket timeout mais folgado
+                            });
                             const imageUrl = `https://www.acasaprime1.com.br/image/${encodeURIComponent(listaLimpa[contLista])}`;
                             const createChild = await axios.post(
                             `https://graph.facebook.com/v23.0/${horaUser[0].idInsta}/media`,
@@ -460,7 +468,9 @@ export class Automacao {
                                 image_url: imageUrl,           // URL pública direta
                                 is_carousel_item: 'true',
                                 access_token: chave[0].token,
-                            }), {
+                            }),  {
+                                httpsAgent: agent,
+                                timeout: 20000, // timeout da request
                                 headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
                             }
                             );
