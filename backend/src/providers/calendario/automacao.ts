@@ -3,12 +3,12 @@ import { Cron } from '@nestjs/schedule';
 import connection from 'src/database/connection';
 import axios from 'axios';
 const ffmpeg = require('fluent-ffmpeg');
-import https from "https";
+import * as https from 'node:https';
 @Injectable()
 export class Automacao {
   private readonly logger = new Logger(Automacao.name);
  //@Cron('0 */5 * * * *')  async handleCron() {
-//@Cron('0 */3 * * * *') async handleCron() {
+ //@Cron('0 */3 * * * *') async handleCron() {
 @Cron('10 * * * * *') async handleCron() {
     const data = new Date();
     const dia = data.getDate();// dia
@@ -463,16 +463,16 @@ export class Automacao {
                             });
                             const imageUrl = `https://www.acasaprime1.com.br/image/${encodeURIComponent(listaLimpa[contLista])}`;
                             const createChild = await axios.post(
-                            `https://graph.facebook.com/v23.0/${horaUser[0].idInsta}/media`,
-                            new URLSearchParams({
-                                image_url: imageUrl,           // URL pública direta
-                                is_carousel_item: 'true',
-                                access_token: chave[0].token,
-                            }),  {
-                                httpsAgent: agent,
-                                timeout: 20000, // timeout da request
-                                headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
-                            }
+                                `https://graph.facebook.com/v23.0/${horaUser[0].idInsta}/media`,
+                                new URLSearchParams({
+                                    image_url: imageUrl,           // URL pública direta
+                                    is_carousel_item: 'true',
+                                    access_token: chave[0].token,
+                                }),  {
+                                    httpsAgent: agent,
+                                    timeout: 20000, // timeout da request
+                                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
+                                }
                             );
                             // ID do filho: container filho 
                             childIds.push(createChild.data.id);
