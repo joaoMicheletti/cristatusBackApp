@@ -215,6 +215,67 @@ export class Automacao {
                                 `src/public/${listaLimpa[contLista]}`,
                                 `src/public/processed-${listaLimpa[contLista]}`
                             );
+                            
+                            // passo 1: criar a sessão de upload
+                            console.log('Processo 1 - criarndo container com o Video Resumable....')
+                            const body =
+                                `media_type=VIDEO` +
+                                `&is_carousel_item=true` +
+                                `&upload_type=resumable` +
+                                `&access_token=${encodeURIComponent(chave[0].token)}`;
+
+                            const { data: session } = await axios.post(
+                                `https://graph.facebook.com/v23.0/${horaUser[0].idInsta}/media`,
+                                body,
+                                {
+                                headers: { "Content-Type": "application/x-www-form-urlencoded" },
+                                transformRequest: [(d) => d],
+                                timeout: 20000,
+                                }
+                            );
+                            console.log('Resposta da criação do container com o video Resumable>>>',session)
+                            // passo 2A: puxar via URL pública
+                            console.log('iniciando o processo de envio de url com nosso video publico para o Reuploas....')
+                            let push = await axios.post(
+                                session.uri,
+                                null,
+                                {
+                                headers: {
+                                    Authorization: `OAuth ${chave[0].token}`,
+                                    "file_url": `https://www.acasaprime1.com.br/image/processed-${listaLimpa[contLista]}`, // ex.: https://www.seu-dominio.com/processed-xxx.mp4
+                                },
+                                timeout: 60000,
+                                maxBodyLength: Infinity,
+                                }
+                            );
+                            console.log('pocesso de envio da url com nosso video publico finalizado:', push.data);
+                            // passo 3: checar processamento
+                            console.log('iniciando  processo de verificar a disponibilidade do container filho criado...')
+                            let i = 0;
+                            while (i < 5){
+                                await new Promise(r => setTimeout(r, 6000));
+                                const { data: status } = await axios.get(
+                                `https://graph.facebook.com/v23.0/${session.id}`,
+                                {
+                                    params: { fields: "status_code", access_token: chave[0].token },
+                                    timeout: 15000,
+                                }
+                                );
+                                if (status.status_code === "FINISHED") {
+                                    console.log('resposta positiva do upload do video.', status.status_code)
+                                    return session.id; // pronto pra usar no children
+                                };
+                                if (status.status_code === "ERROR" || status.status_code === "EXPIRED") {
+                                    throw new Error(`Upload falhou: ${status.status_code} (id=${session.id})`);
+                                };
+                                console.log('Siclos do loop:', i)
+                                i++;
+                            };
+                            if(i === 5){
+                                console.log('tempo limite estourado, 5 minutos e não foi efetuado o Upload.')
+                            }
+  
+                            /** 
                             //processamos o video, vamos aguardar 1 minutos para que a versçao processada esteja disponivel.
                             const params = new URLSearchParams();
                             params.set('is_carousel_item', 'true');
@@ -233,11 +294,11 @@ export class Automacao {
                             );
                             this.logger.debug('Container filho video carrossel - criado>>>>>>>>>',createRes.data.id)
                             this.logger.debug('virificando a disponibilidade do container - criado...',createRes.data.id)
-                            // vamos verificar o status do Container criado.
+                            // vamos verificar o status do Container filho criado criado.
                             let Verification = 0;
                             let n = 2;
                             while (true) {
-                                this.logger.debug(`loop - + timer 2M - Verificando o status da criação do container`);
+                                this.logger.debug(`loop - + timer 2M - Verificando o status da criação do container filho com video.`);
                                 await new Promise(r => setTimeout(r, 60000 * n)); // espera 3 minutos para verificar o status da CRiação do Container 
                                 const statusRes = await axios.get(`https://graph.facebook.com/v23.0/${createRes.data.id}`, {
                                     params: { fields: 'status', access_token: chave[0].token }
@@ -248,8 +309,7 @@ export class Automacao {
                                     this.logger.debug('Finished')
                                     Verification += 1;
                                     break;
-                                } 
-                                if (statusRes.data.status === 'ERROR'){
+                                } else{
                                     let updateProcesso = await connection('calendario').where('id', publicao[cont].id).update('processo', null);
                                     // enviar notificação do erro ao procesar video aos sociais medias e gestor de projetos.
                                     this.logger.debug('erro ao processar video');
@@ -258,7 +318,7 @@ export class Automacao {
                             
                             childIds.push(createRes.data.id);
                             
-                            contLista +=1;
+                            contLista +=1;*/
                         } else {
                             // chegando aqui criaremos o container como uma imagem.
                             const imageUrl = `https://www.acasaprime1.com.br/image/${encodeURIComponent(listaLimpa[contLista])}`;
@@ -272,7 +332,7 @@ export class Automacao {
                                 headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
                             }
                             );
-                            // ID do filho:
+                            // ID do filho: container filho 
                             childIds.push(createChild.data.id);
                             let Verification = 0;
                             let n = 2;
